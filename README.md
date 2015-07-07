@@ -3,18 +3,9 @@
 [![Build Status](https://travis-ci.org/aviks/JDBC.jl.svg?branch=master)](https://travis-ci.org/aviks/JDBC.jl)
 
 
-##Example
+##Example Usage
 
 ```julia
-               _
-   _       _ _(_)_     |  A fresh approach to technical computing
-  (_)     | (_) (_)    |  Documentation: http://docs.julialang.org
-   _ _   _| |_  __ _   |  Type "help()" for help.
-  | | | | | | |/ _` |  |
-  | | |_| | | | (_| |  |  Version 0.3.9-pre+27 (2015-05-20 15:14 UTC)
- _/ |\__'_|_|_|\__'_|  |  Commit 8418a3a* (48 days old release-0.3)
-|__/                   |  x86_64-apple-darwin13.4.0
-
 julia> using JavaCall
 Loaded /Library/Java/JavaVirtualMachines/jdk1.7.0_76.jdk/Contents/Home/jre/lib/server/libjvm.dylib
 
