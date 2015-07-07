@@ -12,15 +12,10 @@ Loaded /Library/Java/JavaVirtualMachines/jdk1.7.0_76.jdk/Contents/Home/jre/lib/s
 julia> using JDBC
 
 julia> JavaCall.addClassPath(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
-1-element Array{String,1}:
- "/Users/aviks/.julia/v0.3/JDBC/test/derby.jar"
 
 julia> JavaCall.init()
 
 julia> conn = DriverManager.getConnection("jdbc:derby:test/juliatest")
-
-signal (11): Segmentation fault: 11
-unknown function (ip: 333085400)
 JavaObject{symbol("java.sql.Connection")}(Ptr{Void} @0x00007fc4c9c62750)
 
 julia> stmt = createStatement(conn)
