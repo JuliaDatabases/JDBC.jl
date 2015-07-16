@@ -4,9 +4,11 @@ using JDBC
 using Base.Test
 using DataFrames
 using Dates
+using Compat
 
 JavaCall.addClassPath(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
 JavaCall.init()
+
 conn = DriverManager.getConnection("jdbc:derby:jar:(toursdb.jar)toursdb")
 stmt = createStatement(conn)
 rs = executeQuery(stmt, "select * from airlines")
@@ -36,5 +38,52 @@ size(flights) == (542,10)
 
 close(rs)
 close(stmt)
+close(conn)
+
+#Test write
+
+if isdir("tmptest")
+    rm("tmptest", recursive=true)
+end
+@assert !isdir("tmptest")
+
+d=@compat Dict("create"=>"true")
+conn = DriverManager.getConnection("jdbc:derby:tmptest", d)
+
+stmt = createStatement(conn)
+
+executeUpdate(stmt, "CREATE TABLE FIRSTTABLE
+                   (ID INT PRIMARY KEY,
+                   NAME VARCHAR(12))")
+ppstmt = prepareStatement(conn, "insert into firsttable values (?, ?)")
+setInt(ppstmt, 1,10)
+setString(ppstmt, 2,"TEN")
+executeUpdate(ppstmt)
+setInt(ppstmt, 1,20)
+setString(ppstmt, 2,"TWENTY")
+executeUpdate(ppstmt)
+rs=executeQuery(stmt, "select * from FIRSTTABLE")
+ft = readtable(rs)
+@assert size(ft) == (2,2)
+ft[1, :ID] == 10
+ft[1, :NAME] == "TEN"
+ft[1, :ID] == 20
+ft[1, :NAME] == "TWENTY"
+
+close(rs)
+close(stmt)
+close(ppstmt)
+
+#Test calling stored procedures
+cstmt = JDBC.prepareCall(conn, "CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(?, ?)")
+setString(cstmt, 1, "derby.locks.deadlockTimeout")
+setString(cstmt, 2, "10")
+execute(cstmt) #no exection thrown
+close(cstmt)
+
+close(conn)
+
+rm("tmptest", recursive=true)
+@assert !isdir("tmptest")
 
 JavaCall.destroy()

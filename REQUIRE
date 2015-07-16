@@ -1,4 +1,4 @@
 julia 0.3
-JavaCall
+JavaCall 0.3.1
 Requires
 Compat
