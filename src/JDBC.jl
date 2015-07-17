@@ -54,7 +54,7 @@ clearParameters(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stm
 
 Base.start(rs::JResultSet) = true
 Base.next(rs::JResultSet, state) = rs, state
-Base.done(rs::JResultSet, state)  = !bool(jcall(rs, "next", jboolean, ()))
+Base.done(rs::JResultSet, state)  = (jcall(rs, "next", jboolean, ()) == 0)
 
 
 for s in [("String", :JString),
@@ -87,7 +87,7 @@ getTime(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateT
 
 Base.close(x::Union(JResultSet, JStatement, JPreparedStatement, JCallableStatement, JConnection)) = jcall(x, "close", Void, ())
 
-wasNull(rs::JResultSet) = bool(jcall(rs, "wasNull", jboolean, ()))
+wasNull(rs::JResultSet) = (jcall(rs, "wasNull", jboolean, ()) != 0)
 
 getMetaData(rs::JResultSet) = jcall(rs, "getMetaData", JResultSetMetaData, ())
 getColumnCount(rsmd::JResultSetMetaData) = jcall(rsmd, "getColumnCount", jint, ())
@@ -112,7 +112,7 @@ function DataFrames.readtable(rs::JResultSet)
     for r in rs
         for c in 1:cols
             tp = getColumnType(rsmd, c)
-            push!(columns[c], apply(get_methods[c], (rs, c)))
+            push!(columns[c], get_methods[c](rs, c))
             if wasNull(rs)
                 push!(missings[c], true)
             else

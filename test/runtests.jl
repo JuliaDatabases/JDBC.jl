@@ -3,7 +3,11 @@ using JavaCall
 using JDBC
 using Base.Test
 using DataFrames
-using Dates
+if VERSION < v"0.4-"
+    using Dates
+else
+    using Base.Dates
+end
 using Compat
 
 JavaCall.addClassPath(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
