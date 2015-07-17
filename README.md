@@ -1,33 +1,83 @@
 # JDBC - Julia interface to Java JDBC database drivers
 
+This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
+
+The API provided by this package is very similar to the native JDBC API, with the necessary changes to move from 
+an object oriented syntax to a Julia's more *functional* syntax. So while a Java method is transformed to a Julia function
+with the same name, the reciever in Java (the object before the dot) becomes the first argument to the Julia function. For
+example, `statement.executeQuery(sql_string)` in Java becomes, in Julia: `executeQuery(statement, sql_string)`. 
+Therefore, some familiarity with JDBC is useful for working with this package. 
+
+In JDBC, accessing the data frome a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
+
+There is however, an optional `readtable` method that is defined when `DataFrames` is loaded. This converts a JDBC resultset into a Julia DataFrame. 
+
 [![Build Status](https://travis-ci.org/aviks/JDBC.jl.svg?branch=master)](https://travis-ci.org/aviks/JDBC.jl)
 
 
-##Example Usage
+###Initialisation
+
+To start it up, add the database driver jar file to the classpath, and then initialise the JVM. 
 
 ```julia
-julia> using JavaCall
-Loaded /Library/Java/JavaVirtualMachines/jdk1.7.0_76.jdk/Contents/Home/jre/lib/server/libjvm.dylib
+using JDBC
+JavaCall.addClassPath("/home/me/derby/derby.jar")
+JDBC.init() # or JavaCall.init()
+ ```
+###Basic Usage
 
-julia> using JDBC
+As described above, using this package is very similar to using a JDBC driver in Java. Write the Julia code in a way that is very similar to how corresponding Java code would look. 
 
-julia> JavaCall.addClassPath(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
-
-julia> JavaCall.init()
-
-julia> conn = DriverManager.getConnection("jdbc:derby:test/juliatest")
-JavaObject{symbol("java.sql.Connection")}(Ptr{Void} @0x00007fc4c9c62750)
-
-julia> stmt = createStatement(conn)
-JavaObject{symbol("java.sql.Statement")}(Ptr{Void} @0x00007fc4c9c62760)
-
-julia> rs = executeQuery(stmt, "select * from firsttable")
-JavaObject{symbol("java.sql.ResultSet")}(Ptr{Void} @0x00007fc4c9c62778)
-
-julia> for r in rs
-         println(getInt(r, 1)," ", getString(r,"NAME"))
-       end
-10 TEN
-20 TWENTY
-30 THIRTY
+```julia
+conn = DriverManager.getConnection("jdbc:derby:test/juliatest")
+stmt = createStatement(conn)
+rs = executeQuery(stmt, "select * from firsttable")
+ for r in rs
+      println(getInt(r, 1),  getString(r,"NAME"))
+ end
 ```
+
+The following accessor functions are defined. Each of these functions take two arguments:  the `Resultset`, and either a field index or a field name. The result of these accessor functions is always a pure Julia object. All conversions from Java types are done before they are returned from these functions. 
+```julia
+getInt
+getFloat
+getString 
+getShort 
+getByte 
+getTime 
+getTimeStamp 
+getDate
+getBoolean
+getNString
+getURL
+```
+###Updates
+
+While inserts and updates can be done via a fully specified SQL string using the `Statement` instance above, it is much safer to do so via a `PreparedStatement`. A `PreparedStatement` has setter functions defined for different types, corresponding to the getter functions shown above. 
+
+```
+ppstmt = prepareStatement(conn, "insert into firsttable values (?, ?)")
+setInt(ppstmt, 1,10)
+setString(ppstmt, 2,"TEN")
+executeUpdate(ppstmt)
+```
+
+Similary, a `CallableStatement` can be used to run stored procedures. A `CallableStatement` can have both input and output parameters, and thus has both getter and setter functions defined. 
+```julia
+cstmt = JDBC.prepareCall(conn, "CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(?, ?)")
+setString(cstmt, 1, "derby.locks.deadlockTimeout")
+setString(cstmt, 2, "10")
+execute(cstmt)
+```
+
+Note that as per the JDBC API there are two kinds of execute methods defined on a `Statement` : `executeQuery` returns a ResultSet (usually from a `select`), and `executeUpdate` returns an Integer which denotes the number of rows effected by a query (usually an `update` or `insert` or a DDL). For `PreparedStatements` and `CallableStatements`, an additional function `execute` is defined which returns a boolean which specifies whether a ResultSet has been returned from the query. 
+
+Also note that for a `Statement`, the query itself is specified in the corresponding `execute..` call, while for a `PreparedStatement` and a `CallableStatement`, the query itself is specified while creating them. 
+
+The connections and the statements should be closed via their `close(...)` functions. `commit(connection)`, `rollaback(connection)` and `setAutoCommit(true|false)` do the obvious things. 
+
+###Caveats
+ * BLOB's are not yet supported. 
+ * While a large part of the JDBC API has been wrapped, not everything is. Please file an issue if you find anything missing that you need. However, it is very easy to call the Java method directly using `JavaCall`. Please look at the `JDBC.jl` source for inspiration if you need to do that. 
+ * Both Julia `DateTime` and Java `java.sql.Date` do not store any timezone information within them. I believe we are doing the right thing here, and everything should be consistent. However timezone is easy to get wrong, so please double check if your application depends on accurate times. 
+ * There are many many different JDBC drivers in Java. This package needs testing with a wide variety of those. 
