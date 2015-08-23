@@ -80,8 +80,8 @@ end
 
 getDate(rs::Union(JResultSet, JCallableStatement), fld::String) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (JString,), fld)))
 getDate(rs::Union(JResultSet, JCallableStatement), fld::Integer) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (jint,), fld)))
-getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.TimeStamp), (JString,), fld))
-getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.TimeStamp), (jint,), fld))
+getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (JString,), fld))
+getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (jint,), fld))
 getTime(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (JString,), fld))
 getTime(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (jint,), fld))
 
