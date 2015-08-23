@@ -10,7 +10,7 @@ else
     using Base.Dates
 end
 
-export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, getInt, getFloat, getString, getShort, getByte, getTime, getTimeStamp, getDate, 
+export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate, 
         getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean, getMetaData, getColumnCount, 
         getColumnType, getColumnName, executeUpdate, execute, commit, rollback, setAutoCommit
 
@@ -80,8 +80,8 @@ end
 
 getDate(rs::Union(JResultSet, JCallableStatement), fld::String) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (JString,), fld)))
 getDate(rs::Union(JResultSet, JCallableStatement), fld::Integer) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (jint,), fld)))
-getTimeStamp(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTimeStamp", @jimport(java.sql.TimeStamp), (JString,), fld))
-getTimeStamp(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTimeStamp", @jimport(java.sql.TimeStamp), (jint,), fld))
+getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.TimeStamp), (JString,), fld))
+getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.TimeStamp), (jint,), fld))
 getTime(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (JString,), fld))
 getTime(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (jint,), fld))
 
@@ -206,7 +206,7 @@ global const get_method_dict = @compat Dict(
         # JDBC_COLTYPE_SQLXML => 2009,
         # JDBC_COLTYPE_STRUCT => 2002,
         JDBC_COLTYPE_TIME => getTime,
-        JDBC_COLTYPE_TIMESTAMP => getTimeStamp,
+        JDBC_COLTYPE_TIMESTAMP => getTimestamp,
         JDBC_COLTYPE_TINYINT => getByte,
         # JDBC_COLTYPE_VARBINARY => -3,
         JDBC_COLTYPE_VARCHAR => getString
