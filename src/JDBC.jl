@@ -10,7 +10,8 @@ else
     using Base.Dates
 end
 
-export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate, 
+export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
+        getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate, 
         getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean, getMetaData, getColumnCount, 
         getColumnType, getColumnName, executeUpdate, execute, commit, rollback, setAutoCommit
 
@@ -51,6 +52,7 @@ execute(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "exec
 executeQuery(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "executeQuery", JResultSet, ())
 executeUpdate(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "executeUpdate", jint, ())
 clearParameters(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "clearParameters", Void, ())
+setFetchSize(stmt::Union(JStatement, JPreparedStatement, JCallableStatement ), x::Integer) = jcall(stmt, "setFetchSize", Void, (jint,), x )
 
 Base.start(rs::JResultSet) = true
 Base.next(rs::JResultSet, state) = rs, state
@@ -111,7 +113,6 @@ function DataFrames.readtable(rs::JResultSet)
     end 
     for r in rs
         for c in 1:cols
-            tp = getColumnType(rsmd, c)
             push!(columns[c], get_methods[c](rs, c))
             if wasNull(rs)
                 push!(missings[c], true)
