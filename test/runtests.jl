@@ -1,8 +1,9 @@
 #This file is part of JDBC.jl. License is MIT.
+using DataFrames
 using JavaCall
 using JDBC
 using Base.Test
-using DataFrames
+
 if VERSION < v"0.4-"
     using Dates
 else
