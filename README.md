@@ -12,7 +12,7 @@ In JDBC, accessing the data frome a SQL call is done by iterating over a `Result
 
 There is however, an optional `readtable` method that is defined when `DataFrames` is loaded. This converts a JDBC resultset into a Julia DataFrame. 
 
-[![Build Status](https://travis-ci.org/aviks/JDBC.jl.svg?branch=master)](https://travis-ci.org/aviks/JDBC.jl)
+[![Build Status](https://travis-ci.org/JuliaDB/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDB/JDBC.jl)
 
 
 ###Initialisation
