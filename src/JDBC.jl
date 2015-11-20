@@ -41,18 +41,18 @@ JConnection = @jimport java.sql.Connection
 init() = JavaCall.init()
 
 createStatement(connection::JConnection) = jcall(connection, "createStatement", JStatement, (),)
-prepareStatement(connection::JConnection, query::String) = jcall(connection, "prepareStatement", JPreparedStatement, (JString,), query) 
-prepareCall(connection::JConnection, query::String) = jcall(connection, "prepareCall", JCallableStatement, (JString,), query) 
+prepareStatement(connection::JConnection, query::AbstractString) = jcall(connection, "prepareStatement", JPreparedStatement, (JString,), query) 
+prepareCall(connection::JConnection, query::AbstractString) = jcall(connection, "prepareCall", JCallableStatement, (JString,), query) 
 commit(connection::JConnection) = jcall(connection, "commit", Void, ())
 rollback(connection::JConnection) = jcall(connection, "rollback", Void, ())
 setAutoCommit(connection::JConnection, x::Bool) = jcall(connection, "setAutoCommit", Void, (jboolean,), x)
-executeQuery(stmt::JStatement, query::String) = jcall(stmt, "executeQuery", JResultSet, (JString,), query)
-executeUpdate(stmt::JStatement, query::String) = jcall(stmt, "executeUpdate", jint, (JString,), query)
-execute(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "execute", jboolean, ())
-executeQuery(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "executeQuery", JResultSet, ())
-executeUpdate(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "executeUpdate", jint, ())
-clearParameters(stmt::Union(JPreparedStatement, JCallableStatement)) = jcall(stmt, "clearParameters", Void, ())
-setFetchSize(stmt::Union(JStatement, JPreparedStatement, JCallableStatement ), x::Integer) = jcall(stmt, "setFetchSize", Void, (jint,), x )
+executeQuery(stmt::JStatement, query::AbstractString) = jcall(stmt, "executeQuery", JResultSet, (JString,), query)
+executeUpdate(stmt::JStatement, query::AbstractString) = jcall(stmt, "executeUpdate", jint, (JString,), query)
+execute(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "execute", jboolean, ())
+executeQuery(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "executeQuery", JResultSet, ())
+executeUpdate(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "executeUpdate", jint, ())
+clearParameters(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "clearParameters", Void, ())
+setFetchSize(stmt::@compat(Union{JStatement, JPreparedStatement, JCallableStatement }), x::Integer) = jcall(stmt, "setFetchSize", Void, (jint,), x )
 
 Base.start(rs::JResultSet) = true
 Base.next(rs::JResultSet, state) = rs, state
@@ -73,21 +73,21 @@ for s in [("String", :JString),
         m = symbol(string("get", s[1]))
         n = symbol(string("set", s[1]))
         v = quote 
-            $m(rs::Union(JResultSet, JCallableStatement), fld::String) = jcall(rs, $(string(m)), $(s[2]), (JString,), fld)
-            $m(rs::Union(JResultSet, JCallableStatement), fld::Integer) = jcall(rs, $(string(m)), $(s[2]), (jint,), fld)
-            $n(stmt::Union(JPreparedStatement, JCallableStatement), idx::Integer, v ) = jcall(stmt, $(string(n)), Void, (jint, $(s[2])), idx, v)
+            $m(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = jcall(rs, $(string(m)), $(s[2]), (JString,), fld)
+            $m(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = jcall(rs, $(string(m)), $(s[2]), (jint,), fld)
+            $n(stmt::@compat(Union{JPreparedStatement, JCallableStatement}), idx::Integer, v ) = jcall(stmt, $(string(n)), Void, (jint, $(s[2])), idx, v)
         end
         eval(v)
 end
 
-getDate(rs::Union(JResultSet, JCallableStatement), fld::String) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (JString,), fld)))
-getDate(rs::Union(JResultSet, JCallableStatement), fld::Integer) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (jint,), fld)))
-getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (JString,), fld))
-getTimestamp(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (jint,), fld))
-getTime(rs::Union(JResultSet, JCallableStatement), fld::String) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (JString,), fld))
-getTime(rs::Union(JResultSet, JCallableStatement), fld::Integer) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (jint,), fld))
+getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (JString,), fld)))
+getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (jint,), fld)))
+getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (JString,), fld))
+getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (jint,), fld))
+getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (JString,), fld))
+getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (jint,), fld))
 
-Base.close(x::Union(JResultSet, JStatement, JPreparedStatement, JCallableStatement, JConnection)) = jcall(x, "close", Void, ())
+Base.close(x::@compat(Union{JResultSet, JStatement, JPreparedStatement, JCallableStatement, JConnection})) = jcall(x, "close", Void, ())
 
 wasNull(rs::JResultSet) = (jcall(rs, "wasNull", jboolean, ()) != 0)
 
