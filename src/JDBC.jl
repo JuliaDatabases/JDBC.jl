@@ -213,4 +213,51 @@ global const get_method_dict = @compat Dict(
         JDBC_COLTYPE_VARCHAR => getString
         )
 
+"""
+Get the metadata (column name and type) for each column of the table in the
+ result set `rs`.
+
+Returns an array of (column name, column type) tuples.
+"""
+function getTableMetaData(rs::JResultSet)
+    rsmd = getMetaData(rs)
+    cols = getColumnCount(rsmd)
+    mdarr = Array(Any, cols)
+    for i = 1:cols
+        mdarr[i] = (getColumnName(rsmd, i), getColumnType(rsmd, i))
+    end
+    return mdarr
+end
+
+"""
+Iterator to get rows of tables as array of tuples.
+"""
+type JDBCRowIterator
+    rs::JResultSet
+    ncols::Int
+    get_methods::Array{Function, 1}
+
+    function JDBCRowIterator(rs::JResultSet)
+        rsmd = getMetaData(rs)
+        ncols = getColumnCount(rsmd)
+        get_methods = Array(Function, ncols)
+        for c in 1:ncols
+            get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
+        end
+        new(rs, ncols, get_methods)
+    end
+end
+
+Base.start(iter::JDBCRowIterator) = true
+function Base.next(iter::JDBCRowIterator, state)
+    row = Array(Any, iter.ncols)
+    for c in 1:iter.ncols
+        row[c] = iter.get_methods[c](iter.rs, c)
+    end       
+        
+    tuple(row...), state
+end
+Base.done(iter::JDBCRowIterator, state) = done(iter.rs, state)
+
+export getTableMetaData, JDBCRowIterator
 end # module
