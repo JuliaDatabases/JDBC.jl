@@ -32,10 +32,15 @@ rs = executeQuery(stmt, "select * from airlines")
 iter = JDBCRowIterator(rs)
 airlines = collect(iter)
 
-@assert getTableMetaData(rs) == [("AIRLINE", 1), ("AIRLINE_FULL", 12), ("BASIC_RATE", 8),
-                                 ("DISTANCE_DISCOUNT", 8), ("BUSINESS_LEVEL_FACTOR", 8),
-                                 ("FIRSTCLASS_LEVEL_FACTOR", 8), ("ECONOMY_SEATS", 4),
-                                 ("BUSINESS_SEATS", 4), ("FIRSTCLASS_SEATS", 4)]
+@assert getTableMetaData(rs) == [("AIRLINE", JDBC.JDBC_COLTYPE_CHAR),
+                                 ("AIRLINE_FULL", JDBC.JDBC_COLTYPE_VARCHAR),
+                                 ("BASIC_RATE", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("DISTANCE_DISCOUNT", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("BUSINESS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("FIRSTCLASS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("ECONOMY_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
+                                 ("BUSINESS_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
+                                 ("FIRSTCLASS_SEATS", JDBC.JDBC_COLTYPE_INTEGER)]
 @assert size(airlines) == (2,)
 @assert length(airlines[1]) == 9
 @assert airlines[1][3] == 0.18
