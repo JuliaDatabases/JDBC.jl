@@ -37,6 +37,14 @@ rs = executeQuery(stmt, "select * from firsttable")
  end
 ```
 
+To get each row as a julia tuple, iterate over the result set using `JDBCRowIterator`.  Values in the tuple will be of Nullable type if they are declared to be nullable in the database.
+
+```julia
+for r in JDBCRowIterator(rs)
+    println(r)
+end
+```
+
 The following accessor functions are defined. Each of these functions take two arguments:  the `Resultset`, and either a field index or a field name. The result of these accessor functions is always a pure Julia object. All conversions from Java types are done before they are returned from these functions. 
 ```julia
 getInt
@@ -75,6 +83,17 @@ Note that as per the JDBC API there are two kinds of execute methods defined on 
 Also note that for a `Statement`, the query itself is specified in the corresponding `execute..` call, while for a `PreparedStatement` and a `CallableStatement`, the query itself is specified while creating them. 
 
 The connections and the statements should be closed via their `close(...)` functions. `commit(connection)`, `rollaback(connection)` and `setAutoCommit(true|false)` do the obvious things. 
+
+###Metadata
+
+Pass the `JResultSet` object from `executeQuery` to `getTableMetaData` to get an array of `(column_name, column_type)` tuples.
+
+```julia
+conn = DriverManager.getConnection("jdbc:derby:test/juliatest")
+stmt = createStatement(conn)
+rs = executeQuery(stmt, "select * from firsttable")
+metadata = getTableMetaData(rs)
+```
 
 ###Caveats
  * BLOB's are not yet supported. 
