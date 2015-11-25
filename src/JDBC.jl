@@ -37,6 +37,9 @@ JPreparedStatement = @jimport java.sql.PreparedStatement
 JCallableStatement = @jimport java.sql.CallableStatement
 JConnection = @jimport java.sql.Connection
 
+const COLUMN_NO_NULLS = 0
+const COLUMN_NULLABLE = 1
+const COLUMN_NULLABLE_UNKNOWN = 2
 
 init() = JavaCall.init()
 
@@ -95,6 +98,7 @@ getMetaData(rs::JResultSet) = jcall(rs, "getMetaData", JResultSetMetaData, ())
 getColumnCount(rsmd::JResultSetMetaData) = jcall(rsmd, "getColumnCount", jint, ())
 getColumnType(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnType", jint, (jint,), col)
 getColumnName(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnName", JString, (jint,), col)
+isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", jint, (jint,), col)
 
 @require DataFrames begin
 using DataFrames
@@ -236,15 +240,19 @@ type JDBCRowIterator
     rs::JResultSet
     ncols::Int
     get_methods::Array{Function, 1}
+    isnullable::Array{Int, 1}
 
     function JDBCRowIterator(rs::JResultSet)
         rsmd = getMetaData(rs)
         ncols = getColumnCount(rsmd)
         get_methods = Array(Function, ncols)
+        isnullable = Array(Int, ncols)
         for c in 1:ncols
             get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
+            isnullable[c] = isNullable(rsmd, c)
         end
-        new(rs, ncols, get_methods)
+
+        new(rs, ncols, get_methods, isnullable)
     end
 end
 
@@ -252,7 +260,14 @@ Base.start(iter::JDBCRowIterator) = true
 function Base.next(iter::JDBCRowIterator, state)
     row = Array(Any, iter.ncols)
     for c in 1:iter.ncols
-        row[c] = iter.get_methods[c](iter.rs, c)
+        val = iter.get_methods[c](iter.rs, c)
+        if wasNull(iter.rs)
+            row[c] = Nullable{typeof(val)}()
+        elseif iter.isnullable[c] == COLUMN_NULLABLE || iter.isnullable[c] == COLUMN_NULLABLE_UNKNOWN
+            row[c] = Nullable(val)
+        else
+            row[c] = val
+        end
     end       
         
     tuple(row...), state

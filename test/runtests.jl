@@ -43,9 +43,9 @@ airlines = collect(iter)
                                  ("FIRSTCLASS_SEATS", JDBC.JDBC_COLTYPE_INTEGER)]
 @assert size(airlines) == (2,)
 @assert length(airlines[1]) == 9
-@assert airlines[1][3] == 0.18
-@assert airlines[2][3] == 0.19
-@assert airlines[1][7] == 20
+@assert airlines[1][3].value == 0.18
+@assert airlines[2][3].value == 0.19
+@assert airlines[1][7].value == 20
 @assert airlines[1][1] == "AA"
 close(rs)
 
