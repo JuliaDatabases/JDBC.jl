@@ -27,6 +27,28 @@ airlines=readtable(rs)
 
 close(rs)
 
+# Tests for `getTableMetaData` and `JDBCRowIterator`.`
+rs = executeQuery(stmt, "select * from airlines")
+iter = JDBCRowIterator(rs)
+airlines = collect(iter)
+
+@assert getTableMetaData(rs) == [("AIRLINE", JDBC.JDBC_COLTYPE_CHAR),
+                                 ("AIRLINE_FULL", JDBC.JDBC_COLTYPE_VARCHAR),
+                                 ("BASIC_RATE", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("DISTANCE_DISCOUNT", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("BUSINESS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("FIRSTCLASS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
+                                 ("ECONOMY_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
+                                 ("BUSINESS_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
+                                 ("FIRSTCLASS_SEATS", JDBC.JDBC_COLTYPE_INTEGER)]
+@assert size(airlines) == (2,)
+@assert length(airlines[1]) == 9
+@assert airlines[1][3].value == 0.18
+@assert airlines[2][3].value == 0.19
+@assert airlines[1][7].value == 20
+@assert airlines[1][1] == "AA"
+close(rs)
+
 rs = executeQuery(stmt, "select * from flights")
 flights=readtable(rs)
 size(flights) == (542,10)
