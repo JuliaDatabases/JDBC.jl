@@ -113,4 +113,19 @@ close(conn)
 rm("tmptest", recursive=true)
 @assert !isdir("tmptest")
 
+# test DBAPI functions
+conn = connect(JDBCInterface, "jdbc:derby:jar:(toursdb.jar)toursdb",
+               connectorpath=joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
+csr = cursor(conn)
+execute!(csr, "select * from airlines")
+airlines = collect(rows(csr))
+@assert size(airlines) == (2,)
+@assert length(airlines[1]) == 9
+@assert airlines[1][3].value == 0.18
+@assert airlines[2][3].value == 0.19
+@assert airlines[1][7].value == 20
+@assert airlines[1][1] == "AA"
+close(csr)
+close(conn)
+
 JavaCall.destroy()
