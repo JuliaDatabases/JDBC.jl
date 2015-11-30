@@ -275,4 +275,7 @@ end
 Base.done(iter::JDBCRowIterator, state) = done(iter.rs, state)
 
 export getTableMetaData, JDBCRowIterator
+
+include("dbapi.jl")
+
 end # module
