@@ -110,6 +110,12 @@ close(cstmt)
 
 close(conn)
 
+try 
+    DriverManager.getConnection("jdbc:derby:;shutdown=true")
+    @assert false "Derby Shutdown Exception should be thrown"
+catch 
+end
+
 rm("tmptest", recursive=true)
 @assert !isdir("tmptest")
 
