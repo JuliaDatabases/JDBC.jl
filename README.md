@@ -85,7 +85,7 @@ Note that as per the JDBC API there are two kinds of execute methods defined on 
 
 Also note that for a `Statement`, the query itself is specified in the corresponding `execute..` call, while for a `PreparedStatement` and a `CallableStatement`, the query itself is specified while creating them. 
 
-The connections and the statements should be closed via their `close(...)` functions. `commit(connection)`, `rollaback(connection)` and `setAutoCommit(true|false)` do the obvious things. 
+The connections and the statements should be closed via their `close(...)` functions. `commit(connection)`, `rollback(connection)` and `setAutoCommit(true|false)` do the obvious things. 
 
 ###Metadata
 
@@ -97,6 +97,41 @@ stmt = createStatement(conn)
 rs = executeQuery(stmt, "select * from firsttable")
 metadata = getTableMetaData(rs)
 ```
+
+###DBAPI.jl Interface
+
+[DBAPI.jl](https://github.com/JuliaDB/DBAPI.jl) is implemented in this package.  To connect:
+
+```julia
+conn = connect(JDBCInterface, "jdbc:mysql://127.0.0.1/",
+               props=Dict("user" => "root", "passwd" => ""),
+               connectorpath="/usr/share/java/mysql-connector-java.jar")
+```
+
+To disconnect:
+
+```julia
+close(conn)
+```
+
+To execute a query, we first need a cursor, then we run `execute!` on the cursor:
+
+```julia
+csr = cursor(conn)
+execute!(csr, "insert into pi_table (pi_value) values (3.14);")
+execute!(csr, "select * from my_table;")
+```
+
+To iterate over rows call `rows` on the cursor:
+
+```julia
+rs = rows(csr)
+for row in rs
+    # do stuff with row
+end
+```
+
+To close the cursor call `close` on the cursor instance.
 
 ###Caveats
  * BLOB's are not yet supported. 

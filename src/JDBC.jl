@@ -13,7 +13,7 @@ end
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate, 
         getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean, getMetaData, getColumnCount, 
-        getColumnType, getColumnName, executeUpdate, execute, commit, rollback, setAutoCommit
+        getColumnType, getColumnName, executeUpdate, execute, commit, rollback, setAutoCommit, getResultSet
 
 module DriverManager
     using JavaCall
@@ -52,10 +52,12 @@ setAutoCommit(connection::JConnection, x::Bool) = jcall(connection, "setAutoComm
 executeQuery(stmt::JStatement, query::AbstractString) = jcall(stmt, "executeQuery", JResultSet, (JString,), query)
 executeUpdate(stmt::JStatement, query::AbstractString) = jcall(stmt, "executeUpdate", jint, (JString,), query)
 execute(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "execute", jboolean, ())
+execute(stmt::JStatement, query::AbstractString) = jcall(stmt, "execute", jboolean, (JString,), query)
 executeQuery(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "executeQuery", JResultSet, ())
 executeUpdate(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "executeUpdate", jint, ())
 clearParameters(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "clearParameters", Void, ())
 setFetchSize(stmt::@compat(Union{JStatement, JPreparedStatement, JCallableStatement }), x::Integer) = jcall(stmt, "setFetchSize", Void, (jint,), x )
+getResultSet(stmt::JStatement) = jcall(stmt, "getResultSet", JResultSet, ())
 
 Base.start(rs::JResultSet) = true
 Base.next(rs::JResultSet, state) = rs, state
