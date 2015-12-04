@@ -126,15 +126,25 @@ through the cursor.
 `parameters` can be any iterable of positional parameters, or of some
 T<:Associative for keyword/named parameters.
 
-Throws a `JDBCError` if cursor is not initialized or connection is null.
+Throws a `JDBCError` if query caused an error, cursor is not initialized or
+ connection is null.
 
 Returns `nothing`.
 """
 function execute!(csr::JDBCCursor, qry::DatabaseQuery, parameters=())
     isopen(connection(csr)) || throw(JDBCError("Cannot execute with null connection."))
     csr.stmt == nothing && throw(JDBCError("Execute called on uninitialized cursor."))
-    rs = executeQuery(csr.stmt, qry.query)
-    csr.rs = rs
+    exectype = execute(csr.stmt, qry.query)
+    try
+        JavaCall.geterror()
+    catch err
+        throw(JDBCError(err.msg))
+    end
+    if exectype == 1  # if this is a statement that returned a result set.
+        csr.rs = getResultSet(csr.stmt)
+    else
+        csr.rs = nothing
+    end
     return nothing
 end
 
