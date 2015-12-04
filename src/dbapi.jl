@@ -4,7 +4,10 @@ using JavaCall
 abstract JDBCInterface <: DatabaseInterface
 
 type JDBCConnection <: DatabaseConnection{JDBCInterface}
-    conn::Union{JConnection, Void}
+    conn::Nullable{JConnection}
+    function JDBCConnection(conn::JConnection)
+        new(Nullable(conn))
+    end
 end
 
 type JDBCError <: DatabaseError{JDBCInterface}
@@ -17,14 +20,17 @@ end
 
 type JDBCCursor <: DatabaseCursor{JDBCInterface}
     conn::JDBCConnection
-    stmt::Union{JStatement, Void}
-    rs::Union{JResultSet, Void}
+    stmt::Nullable{JStatement}
+    rs::Nullable{JResultSet}
+    function JDBCCursor(conn, stmt::JStatement)
+        new(conn, Nullable(stmt), Nullable{JResultSet}())
+    end
 end
 
 function JDBCCursor(conn)
     isopen(conn) || throw(JDBCError("Attempting to create cursor with a null connection"))
-    stmt = createStatement(conn.conn)
-    JDBCCursor(conn, stmt, nothing)
+    stmt = createStatement(conn.conn.value)
+    JDBCCursor(conn, stmt)
 end
 
 export JDBCInterface, JDBCError, JDBCConnection, JDBCCursor
@@ -60,8 +66,8 @@ Returns `nothing`.
 """
 function close(conn::JDBCConnection)
     isopen(conn) || throw(JDBCError("Cannot close null connection."))
-    close(conn.conn)
-    conn.conn = nothing
+    close(conn.conn.value)
+    conn.conn = Nullable{JConnection}()
     return nothing
 end
 
@@ -71,17 +77,17 @@ Close the JDBCCursor `csr`.  Throws a `JDBCError` if cursor is not initialized.
 Returns `nothing`.
 """
 function close(csr::JDBCCursor)
-    csr.stmt == nothing && throw(JDBCError("Cannot close uninitialized cursor."))
-    csr.rs == nothing || begin; close(csr.rs); csr.rs = nothing; end
-    close(csr.stmt)
-    csr.stmt = nothing
+    isnull(csr.stmt) && throw(JDBCError("Cannot close uninitialized cursor."))
+    isnull(csr.rs) || begin; close(csr.rs.value); csr.rs = Nullable{JResultSet}(); end
+    close(csr.stmt.value)
+    csr.stmt = Nullable{JStatement}()
     return nothing
 end
 
 """
 Returns a boolean indicating whether connection `conn` is open.
 """
-isopen(conn::JDBCConnection) = conn.conn != nothing
+isopen(conn::JDBCConnection) = !isnull(conn.conn)
 
 """
 Commit any pending transaction to the database.  Throws a `JDBCError` if connection is null.
@@ -90,7 +96,7 @@ Returns `nothing`.
 """
 function commit(conn::JDBCConnection)
     isopen(conn) || throw(JDBCError("Commit called on null connection."))
-    commit(conn.conn)
+    commit(conn.conn.value)
     return nothing
 end
 
@@ -101,7 +107,7 @@ Returns `nothing`.
 """
 function rollback(conn::JDBCConnection)
     isopen(conn) || throw(JDBCError("Rollback called on null connection."))
-    rollback(conn.conn)
+    rollback(conn.conn.value)
     return nothing
 end
 
@@ -133,17 +139,17 @@ Returns `nothing`.
 """
 function execute!(csr::JDBCCursor, qry::DatabaseQuery, parameters=())
     isopen(connection(csr)) || throw(JDBCError("Cannot execute with null connection."))
-    csr.stmt == nothing && throw(JDBCError("Execute called on uninitialized cursor."))
-    exectype = execute(csr.stmt, qry.query)
+    isnull(csr.stmt) && throw(JDBCError("Execute called on uninitialized cursor."))
+    exectype = execute(csr.stmt.value, qry.query)
     try
         JavaCall.geterror()
     catch err
         throw(JDBCError(err.msg))
     end
     if exectype == 1  # if this is a statement that returned a result set.
-        csr.rs = getResultSet(csr.stmt)
+        csr.rs = getResultSet(csr.stmt.value)
     else
-        csr.rs = nothing
+        csr.rs = Nullable{JResultSet}()
     end
     return nothing
 end
@@ -160,8 +166,8 @@ Returns a `JDBCRowIterator` instance.
 """
 function rows(csr::JDBCCursor)
     isopen(connection(csr)) || throw(JDBCError("Cannot create iterator with null connection."))
-    csr.rs == nothing && throw(JDBCError("Cannot create iterator with null result set.  Please call execute! on the cursor first."))
-    return JDBCRowIterator(csr.rs)
+    isnull(csr.rs) && throw(JDBCError("Cannot create iterator with null result set.  Please call execute! on the cursor first."))
+    return JDBCRowIterator(csr.rs.value)
 end
 
 export connect, close, isopen, commit, rollback, cursor,
