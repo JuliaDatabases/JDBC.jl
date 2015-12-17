@@ -108,7 +108,20 @@ setString(cstmt, 2, "10")
 execute(cstmt) #no exection thrown
 close(cstmt)
 
-close(conn)
+# test DBAPI functions
+dbconn = connect(JDBCInterface, "jdbc:derby:jar:(toursdb.jar)toursdb",
+               connectorpath=joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
+csr = cursor(dbconn)
+execute!(csr, "select * from airlines")
+airlines = collect(rows(csr))
+@assert size(airlines) == (2,)
+@assert length(airlines[1]) == 9
+@assert airlines[1][3].value == 0.18
+@assert airlines[2][3].value == 0.19
+@assert airlines[1][7].value == 20
+@assert airlines[1][1] == "AA"
+close(csr)
+close(dbconn)
 
 try 
     DriverManager.getConnection("jdbc:derby:;shutdown=true")
