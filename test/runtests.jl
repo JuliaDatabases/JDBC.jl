@@ -108,21 +108,10 @@ setString(cstmt, 2, "10")
 execute(cstmt) #no exection thrown
 close(cstmt)
 
-close(conn)
-
-try 
-    DriverManager.getConnection("jdbc:derby:;shutdown=true")
-    @assert false "Derby Shutdown Exception should be thrown"
-catch 
-end
-
-rm("tmptest", recursive=true)
-@assert !isdir("tmptest")
-
 # test DBAPI functions
-conn = connect(JDBCInterface, "jdbc:derby:jar:(toursdb.jar)toursdb",
+dbconn = connect(JDBCInterface, "jdbc:derby:jar:(toursdb.jar)toursdb",
                connectorpath=joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
-csr = cursor(conn)
+csr = cursor(dbconn)
 execute!(csr, "select * from airlines")
 airlines = collect(rows(csr))
 @assert size(airlines) == (2,)
@@ -132,6 +121,15 @@ airlines = collect(rows(csr))
 @assert airlines[1][7].value == 20
 @assert airlines[1][1] == "AA"
 close(csr)
-close(conn)
+close(dbconn)
+
+try 
+    DriverManager.getConnection("jdbc:derby:;shutdown=true")
+    @assert false "Derby Shutdown Exception should be thrown"
+catch 
+end
+
+rm("tmptest", recursive=true)
+@assert !isdir("tmptest")
 
 JavaCall.destroy()
