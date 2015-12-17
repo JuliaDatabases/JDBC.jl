@@ -1,6 +1,6 @@
 # JDBC - Julia interface to Java JDBC database drivers
 
-[![Build Status](https://travis-ci.org/JuliaDB/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDB/JDBC.jl)  [![Build status](https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true)](https://ci.appveyor.com/project/aviks/jdbc-jl)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.3.svg)](http://pkg.julialang.org/?pkg=JDBC)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.4.svg)](http://pkg.julialang.org/?pkg=JDBC)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.5.svg)](http://pkg.julialang.org/?pkg=JDBC)
+[![Build Status](https://travis-ci.org/JuliaDB/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDB/JDBC.jl)  [![Build status](https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true)](https://ci.appveyor.com/project/aviks/jdbc-jl)   [![JDBC](http://pkg.julialang.org/badges/JDBC_0.4.svg)](http://pkg.julialang.org/?pkg=JDBC)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.5.svg)](http://pkg.julialang.org/?pkg=JDBC)
 
 
 This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
@@ -14,6 +14,8 @@ Therefore, some familiarity with JDBC is useful for working with this package.
 In JDBC, accessing the data frome a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
 
 There is however, an optional `readtable` method that is defined when `DataFrames` is loaded. This converts a JDBC resultset into a Julia DataFrame. 
+
+This package is now `julia v0.4` and later only. The last released version of this package that works with `julia v0.3` is `v0.0.3`
 
 
 
