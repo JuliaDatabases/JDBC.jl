@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>JDBC.jl by JuliaDB</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>JDBC.jl</h1>
+        <p>Julia interface to Java database drivers</p>
+
+        <p class="view"><a href="https://github.com/JuliaDB/JDBC.jl">View the Project on GitHub <small>JuliaDB/JDBC.jl</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/JuliaDB/JDBC.jl/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/JuliaDB/JDBC.jl/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/JuliaDB/JDBC.jl">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="jdbc---julia-interface-to-java-jdbc-database-drivers" class="anchor" href="#jdbc---julia-interface-to-java-jdbc-database-drivers" aria-hidden="true"><span class="octicon octicon-link"></span></a>JDBC - Julia interface to Java JDBC database drivers</h1>
+
+<p><a href="https://travis-ci.org/JuliaDB/JDBC.jl"><img src="https://travis-ci.org/JuliaDB/JDBC.jl.svg?branch=master" alt="Build Status"></a>  <a href="https://ci.appveyor.com/project/aviks/jdbc-jl"><img src="https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true" alt="Build status"></a>   <a href="http://pkg.julialang.org/?pkg=JDBC"><img src="http://pkg.julialang.org/badges/JDBC_0.4.svg" alt="JDBC"></a>  <a href="http://pkg.julialang.org/?pkg=JDBC"><img src="http://pkg.julialang.org/badges/JDBC_0.5.svg" alt="JDBC"></a></p>
+
+<p>This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the <a href="https://github.com/aviks/JavaCall.jl">JavaCall.jl</a> package to call into Java in order to use the JDBC drivers. </p>
+
+<p>The API provided by this package is very similar to the native JDBC API, with the necessary changes to move from 
+an object oriented syntax to a Julia's more <em>functional</em> syntax. So while a Java method is transformed to a Julia function
+with the same name, the reciever in Java (the object before the dot) becomes the first argument to the Julia function. For
+example, <code>statement.executeQuery(sql_string)</code> in Java becomes, in Julia: <code>executeQuery(statement, sql_string)</code>. 
+Therefore, some familiarity with JDBC is useful for working with this package. </p>
+
+<p>In JDBC, accessing the data frome a SQL call is done by iterating over a <code>ResultSet</code> instance. In Julia therefore, the <code>ResultSet</code> is a regular Julia iterator, and can be iterated in the usual fashion. </p>
+
+<p>There is however, an optional <code>readtable</code> method that is defined when <code>DataFrames</code> is loaded. This converts a JDBC resultset into a Julia DataFrame. </p>
+
+<p>This package is now <code>julia v0.4</code> and later only. The last released version of this package that works with <code>julia v0.3</code> is <code>v0.0.3</code></p>
+
+<h3>
+<a id="initialisation" class="anchor" href="#initialisation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Initialisation</h3>
+
+<p>To start it up, add the database driver jar file to the classpath, and then initialise the JVM. </p>
+
+<div class="highlight highlight-source-julia"><pre><span class="pl-k">using</span> JDBC
+JavaCall<span class="pl-k">.</span><span class="pl-c1">addClassPath</span>(<span class="pl-s"><span class="pl-pds">"</span>/home/me/derby/derby.jar<span class="pl-pds">"</span></span>)
+JDBC<span class="pl-k">.</span><span class="pl-c1">init</span>() <span class="pl-c"># or JavaCall.init()</span></pre></div>
+
+<h3>
+<a id="basic-usage" class="anchor" href="#basic-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic Usage</h3>
+
+<p>As described above, using this package is very similar to using a JDBC driver in Java. Write the Julia code in a way that is very similar to how corresponding Java code would look. </p>
+
+<div class="highlight highlight-source-julia"><pre>conn <span class="pl-k">=</span> DriverManager<span class="pl-k">.</span><span class="pl-c1">getConnection</span>(<span class="pl-s"><span class="pl-pds">"</span>jdbc:derby:test/juliatest<span class="pl-pds">"</span></span>)
+stmt <span class="pl-k">=</span> <span class="pl-c1">createStatement</span>(conn)
+rs <span class="pl-k">=</span> <span class="pl-c1">executeQuery</span>(stmt, <span class="pl-s"><span class="pl-pds">"</span>select * from firsttable<span class="pl-pds">"</span></span>)
+ <span class="pl-k">for</span> r <span class="pl-k">in</span> rs
+      <span class="pl-c1">println</span>(<span class="pl-c1">getInt</span>(r, <span class="pl-c1">1</span>),  <span class="pl-c1">getString</span>(r,<span class="pl-s"><span class="pl-pds">"</span>NAME<span class="pl-pds">"</span></span>))
+ <span class="pl-k">end</span></pre></div>
+
+<p>To get each row as a julia tuple, iterate over the result set using <code>JDBCRowIterator</code>.  Values in the tuple will be of Nullable type if they are declared to be nullable in the database.</p>
+
+<div class="highlight highlight-source-julia"><pre><span class="pl-k">for</span> r <span class="pl-k">in</span> <span class="pl-c1">JDBCRowIterator</span>(rs)
+    <span class="pl-c1">println</span>(r)
+<span class="pl-k">end</span></pre></div>
+
+<p>The following accessor functions are defined. Each of these functions take two arguments:  the <code>Resultset</code>, and either a field index or a field name. The result of these accessor functions is always a pure Julia object. All conversions from Java types are done before they are returned from these functions. </p>
+
+<div class="highlight highlight-source-julia"><pre>getInt
+getFloat
+getString 
+getShort 
+getByte 
+getTime 
+getTimeStamp 
+getDate
+getBoolean
+getNString
+getURL</pre></div>
+
+<h3>
+<a id="updates" class="anchor" href="#updates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Updates</h3>
+
+<p>While inserts and updates can be done via a fully specified SQL string using the <code>Statement</code> instance above, it is much safer to do so via a <code>PreparedStatement</code>. A <code>PreparedStatement</code> has setter functions defined for different types, corresponding to the getter functions shown above. </p>
+
+<pre><code>ppstmt = prepareStatement(conn, "insert into firsttable values (?, ?)")
+setInt(ppstmt, 1,10)
+setString(ppstmt, 2,"TEN")
+executeUpdate(ppstmt)
+</code></pre>
+
+<p>Similary, a <code>CallableStatement</code> can be used to run stored procedures. A <code>CallableStatement</code> can have both input and output parameters, and thus has both getter and setter functions defined. </p>
+
+<div class="highlight highlight-source-julia"><pre>cstmt <span class="pl-k">=</span> JDBC<span class="pl-k">.</span><span class="pl-c1">prepareCall</span>(conn, <span class="pl-s"><span class="pl-pds">"</span>CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(?, ?)<span class="pl-pds">"</span></span>)
+<span class="pl-c1">setString</span>(cstmt, <span class="pl-c1">1</span>, <span class="pl-s"><span class="pl-pds">"</span>derby.locks.deadlockTimeout<span class="pl-pds">"</span></span>)
+<span class="pl-c1">setString</span>(cstmt, <span class="pl-c1">2</span>, <span class="pl-s"><span class="pl-pds">"</span>10<span class="pl-pds">"</span></span>)
+<span class="pl-c1">execute</span>(cstmt)</pre></div>
+
+<p>Note that as per the JDBC API there are two kinds of execute methods defined on a <code>Statement</code> : <code>executeQuery</code> returns a ResultSet (usually from a <code>select</code>), and <code>executeUpdate</code> returns an Integer which denotes the number of rows effected by a query (usually an <code>update</code> or <code>insert</code> or a DDL). For <code>PreparedStatements</code> and <code>CallableStatements</code>, an additional function <code>execute</code> is defined which returns a boolean which specifies whether a ResultSet has been returned from the query. </p>
+
+<p>Also note that for a <code>Statement</code>, the query itself is specified in the corresponding <code>execute..</code> call, while for a <code>PreparedStatement</code> and a <code>CallableStatement</code>, the query itself is specified while creating them. </p>
+
+<p>The connections and the statements should be closed via their <code>close(...)</code> functions. <code>commit(connection)</code>, <code>rollback(connection)</code> and <code>setAutoCommit(true|false)</code> do the obvious things.</p>
+
+<h3>
+<a id="metadata" class="anchor" href="#metadata" aria-hidden="true"><span class="octicon octicon-link"></span></a>Metadata</h3>
+
+<p>Pass the <code>JResultSet</code> object from <code>executeQuery</code> to <code>getTableMetaData</code> to get an array of <code>(column_name, column_type)</code> tuples.</p>
+
+<div class="highlight highlight-source-julia"><pre>conn <span class="pl-k">=</span> DriverManager<span class="pl-k">.</span><span class="pl-c1">getConnection</span>(<span class="pl-s"><span class="pl-pds">"</span>jdbc:derby:test/juliatest<span class="pl-pds">"</span></span>)
+stmt <span class="pl-k">=</span> <span class="pl-c1">createStatement</span>(conn)
+rs <span class="pl-k">=</span> <span class="pl-c1">executeQuery</span>(stmt, <span class="pl-s"><span class="pl-pds">"</span>select * from firsttable<span class="pl-pds">"</span></span>)
+metadata <span class="pl-k">=</span> <span class="pl-c1">getTableMetaData</span>(rs)</pre></div>
+
+<h3>
+<a id="dbapijl-interface" class="anchor" href="#dbapijl-interface" aria-hidden="true"><span class="octicon octicon-link"></span></a>DBAPI.jl Interface</h3>
+
+<p><a href="https://github.com/JuliaDB/DBAPI.jl">DBAPI.jl</a> is implemented in this package.  To connect:</p>
+
+<div class="highlight highlight-source-julia"><pre>conn <span class="pl-k">=</span> <span class="pl-c1">connect</span>(JDBCInterface, <span class="pl-s"><span class="pl-pds">"</span>jdbc:mysql://127.0.0.1/<span class="pl-pds">"</span></span>,
+               props<span class="pl-k">=</span><span class="pl-c1">Dict</span>(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span> <span class="pl-k">=</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>passwd<span class="pl-pds">"</span></span> <span class="pl-k">=</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>),
+               connectorpath<span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>/usr/share/java/mysql-connector-java.jar<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>To disconnect:</p>
+
+<div class="highlight highlight-source-julia"><pre><span class="pl-c1">close</span>(conn)</pre></div>
+
+<p>To execute a query, we first need a cursor, then we run <code>execute!</code> on the cursor:</p>
+
+<div class="highlight highlight-source-julia"><pre>csr <span class="pl-k">=</span> <span class="pl-c1">cursor</span>(conn)
+<span class="pl-c1">execute!</span>(csr, <span class="pl-s"><span class="pl-pds">"</span>insert into pi_table (pi_value) values (3.14);<span class="pl-pds">"</span></span>)
+<span class="pl-c1">execute!</span>(csr, <span class="pl-s"><span class="pl-pds">"</span>select * from my_table;<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>To iterate over rows call <code>rows</code> on the cursor:</p>
+
+<div class="highlight highlight-source-julia"><pre>rs <span class="pl-k">=</span> <span class="pl-c1">rows</span>(csr)
+<span class="pl-k">for</span> row <span class="pl-k">in</span> rs
+    <span class="pl-c"># do stuff with row</span>
+<span class="pl-k">end</span></pre></div>
+
+<p>To close the cursor call <code>close</code> on the cursor instance.</p>
+
+<h3>
+<a id="caveats" class="anchor" href="#caveats" aria-hidden="true"><span class="octicon octicon-link"></span></a>Caveats</h3>
+
+<ul>
+<li>BLOB's are not yet supported. </li>
+<li>While a large part of the JDBC API has been wrapped, not everything is. Please file an issue if you find anything missing that you need. However, it is very easy to call the Java method directly using <code>JavaCall</code>. Please look at the <code>JDBC.jl</code> source for inspiration if you need to do that. </li>
+<li>Both Julia <code>DateTime</code> and Java <code>java.sql.Date</code> do not store any timezone information within them. I believe we are doing the right thing here, and everything should be consistent. However timezone is easy to get wrong, so please double check if your application depends on accurate times. </li>
+<li>There are many many different JDBC drivers in Java. This package needs testing with a wide variety of those. </li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/JuliaDB">JuliaDB</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
