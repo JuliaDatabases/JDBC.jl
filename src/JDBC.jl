@@ -43,20 +43,232 @@ const COLUMN_NULLABLE_UNKNOWN = 2
 
 init() = JavaCall.init()
 
+"""
+```
+createStatement(connection::JConnection)
+```
+Initializes a Statement
+
+### Args
+* connection: The connection object
+
+### Returns
+The JStatement object
+"""
 createStatement(connection::JConnection) = jcall(connection, "createStatement", JStatement, (),)
+
+"""
+```
+prepareStatement(connection::JConnection, query::AbstractString)
+```
+Prepares the Statement for the given query
+
+### Args
+* connection: The connection object
+* query: The query string
+
+### Returns
+The JPreparedStatement object
+"""
 prepareStatement(connection::JConnection, query::AbstractString) = jcall(connection, "prepareStatement", JPreparedStatement, (JString,), query) 
+
+"""
+```
+prepareCall(connection::JConnection, query::AbstractString)
+```
+Prepares the Callable Statement for the given query
+
+### Args
+* connection: The connection object
+* query: The query string
+
+### Returns
+The JCallableStatement object
+"""
 prepareCall(connection::JConnection, query::AbstractString) = jcall(connection, "prepareCall", JCallableStatement, (JString,), query) 
+
+
+"""
+```
+commit(connection::JConnection)
+```
+Commits the transaction
+
+### Args
+* connection: The connection object
+
+### Returns
+None
+"""
 commit(connection::JConnection) = jcall(connection, "commit", Void, ())
+
+
+"""
+```
+rollback(connection::JConnection)
+```
+Rolls back the transactions.
+
+### Args
+* connection: The connection object
+
+### Returns
+None
+"""
 rollback(connection::JConnection) = jcall(connection, "rollback", Void, ())
+
+
+"""
+```
+setAutoCommit(connection::JConnection, x::Bool)
+```
+Set the Auto Commit flag to either true or false. If set to false, commit has to be called explicitly
+
+### Args
+* connection: The connection object
+
+### Returns
+None
+"""
 setAutoCommit(connection::JConnection, x::Bool) = jcall(connection, "setAutoCommit", Void, (jboolean,), x)
+
+
+"""
+```
+executeQuery(stmt::JStatement, query::AbstractString)
+```
+Executes the auery and returns the results as a JResultSet object.
+
+### Args
+* stmt: The Statement object
+* query: The query to be executed
+
+### Returns
+The result set as a JResultSet object
+"""
 executeQuery(stmt::JStatement, query::AbstractString) = jcall(stmt, "executeQuery", JResultSet, (JString,), query)
+
+
+"""
+```
+executeUpdate(stmt::JStatement, query::AbstractString)
+```
+Executes the update auery and returns the status of the execution of the query
+
+### Args
+* stmt: The Statement object
+* query: The query to be executed
+
+### Returns
+An integer representing the status of the execution
+"""
 executeUpdate(stmt::JStatement, query::AbstractString) = jcall(stmt, "executeUpdate", jint, (JString,), query)
+
+
+"""
+```
+execute(stmt::@compat(Union{JPreparedStatement, JCallableStatement}))
+```
+Executes the auery based on the Prepared Statement or Callable Statement
+
+### Args
+* stmt: The Prepared Statement or the Callable Statement object
+
+### Returns
+A boolean indicating whether the execution was successful or not
+"""
 execute(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "execute", jboolean, ())
+
+
+"""
+```
+execute(stmt::JStatement, query::AbstractString)
+```
+Executes the auery based on JStatement or any of its sub-types
+
+### Args
+* stmt: The JStatement object or any of its sub-types
+* query: The query to be executed
+
+### Returns
+A boolean indicating whether the execution was successful or not
+"""
 execute(stmt::JStatement, query::AbstractString) = jcall(stmt, "execute", jboolean, (JString,), query)
+
+
+"""
+```
+executeQuery(stmt::@compat(Union{JPreparedStatement, JCallableStatement}))
+```
+Executes the auery based on a JPreparedStatement object or a JCallableStatement object
+
+### Args
+* stmt: The JPreparedStatement object or JCallableStatement object
+
+### Returns
+The result set as a JResultSet object
+"""
 executeQuery(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "executeQuery", JResultSet, ())
+
+
+"""
+```
+executeUpdate(stmt::@compat(Union{JPreparedStatement, JCallableStatement}))
+```
+Executes the update auery based on a JPreparedStatement object or a JCallableStatement object
+
+### Args
+* stmt: The JPreparedStatement object or JCallableStatement object
+
+### Returns
+An integer indicating the status of the execution of the query
+"""
 executeUpdate(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "executeUpdate", jint, ())
+
+
+"""
+```
+clearParameters(stmt::@compat(Union{JPreparedStatement, JCallableStatement}))
+```
+Clears the currently held parameters in a JPreparedStatement object or a JCallableStatement object
+
+### Args
+* stmt: The JPreparedStatement object or JCallableStatement object
+
+### Returns
+None
+"""
 clearParameters(stmt::@compat(Union{JPreparedStatement, JCallableStatement})) = jcall(stmt, "clearParameters", Void, ())
+
+
+"""
+```
+setFetchSize(stmt::@compat(Union{JStatement, JPreparedStatement, JCallableStatement }), x::Integer)
+```
+Sets the fetch size in a JStatement or a JPreparedStatement object or a JCallableStatement object. The number of records that are returned in subsequent query executions are determined by what is set here.
+
+### Args
+* stmt: The JPreparedStatement object or JCallableStatement object
+* x: The number of records to be returned
+
+### Returns
+None
+"""
 setFetchSize(stmt::@compat(Union{JStatement, JPreparedStatement, JCallableStatement }), x::Integer) = jcall(stmt, "setFetchSize", Void, (jint,), x )
+
+
+"""
+```
+getResultSet(stmt::JStatement)
+```
+Returns the result set based on the previous execution of the query based on a JStatement
+
+### Args
+* stmt: The JStatement object
+
+### Returns
+The JResultSet object.
+"""
 getResultSet(stmt::JStatement) = jcall(stmt, "getResultSet", JResultSet, ())
 
 Base.start(rs::JResultSet) = true
@@ -85,21 +297,167 @@ for s in [("String", :JString),
         eval(v)
 end
 
+"""
+```
+getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
+```
+Returns the Date object based on the result set or a callable statement. The value is extracted based on the column name. 
+
+### Args
+* stmt: The JResultSet or JCallableStatement object
+* fld: The column name
+
+### Returns
+The Date object.
+"""
 getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (JString,), fld)))
+
+
+"""
+```
+getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer)
+```
+Returns the Date object based on the result set or a callable statement. The value is extracted based on the column number. 
+
+### Args
+* stmt: The JResultSet or JCallableStatement object
+* fld: The column number
+
+### Returns
+The Date object.
+"""
 getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = Date(convert(DateTime, jcall(rs, "getDate", @jimport(java.sql.Date), (jint,), fld)))
+
+
+"""
+```
+getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
+```
+Returns the Timestamp object based on the result set or a callable statement. The value is extracted based on the column name. 
+
+### Args
+* stmt: The JResultSet or JCallableStatement object
+* fld: The column name
+
+### Returns
+The Timestamp object.
+"""
 getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (JString,), fld))
+
+
+"""
+```
+getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer)
+```
+Returns the Timestamp object based on the result set or a callable statement. The value is extracted based on the column number. 
+
+### Args
+* stmt: The JResultSet or JCallableStatement object
+* fld: The column number
+
+### Returns
+The Timestamp object.
+"""
 getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = convert(DateTime, jcall(rs, "getTimestamp", @jimport(java.sql.Timestamp), (jint,), fld))
+
+
+"""
+```
+getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
+```
+Returns the Time object based on the result set or a callable statement. The value is extracted based on the column name. 
+
+### Args
+* stmt: The JResultSet or JCallableStatement object
+* fld: The column name
+
+### Returns
+The Time object.
+"""
 getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (JString,), fld))
+
+
+"""
+```
+getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer)
+```
+Returns the Time object based on the result set or a callable statement. The value is extracted based on the column number. 
+
+### Args
+* stmt: The JResultSet or JCallableStatement object
+* fld: The column number
+
+### Returns
+The Time object.
+"""
 getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (jint,), fld))
 
 Base.close(x::@compat(Union{JResultSet, JStatement, JPreparedStatement, JCallableStatement, JConnection})) = jcall(x, "close", Void, ())
 
 wasNull(rs::JResultSet) = (jcall(rs, "wasNull", jboolean, ()) != 0)
 
+"""
+```
+getMetaData(rs::JResultSet)
+```
+Returns information about the types and properties of the columns in the ResultSet object
+
+### Args
+* stmt: The JResultSet object
+
+### Returns
+The JResultSetMetaData object.
+"""
 getMetaData(rs::JResultSet) = jcall(rs, "getMetaData", JResultSetMetaData, ())
+
+
+"""
+```
+getColumnCount(rsmd::JResultSetMetaData)
+```
+Returns the number of columns based on the JResultSetMetaData object
+
+### Args
+* rsmd: The JResultSetMetaData object
+
+### Returns
+The number of columns.
+"""
 getColumnCount(rsmd::JResultSetMetaData) = jcall(rsmd, "getColumnCount", jint, ())
+
+
+"""
+```
+getColumnType(rsmd::JResultSetMetaData, col::Integer)
+```
+Returns the column's data type based on the JResultSetMetaData object and the column number
+
+### Args
+* rsmd: The JResultSetMetaData object
+* col: The column number
+
+### Returns
+The column type as an integer
+"""
 getColumnType(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnType", jint, (jint,), col)
+
+
+"""
+```
+getColumnName(rsmd::JResultSetMetaData, col::Integer)
+```
+Returns the column's name based on the JResultSetMetaData object and the column number
+
+### Args
+* rsmd: The JResultSetMetaData object
+* col: The column number
+
+### Returns
+The column name 
+"""
 getColumnName(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnName", JString, (jint,), col)
+
+
 isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", jint, (jint,), col)
 
 @require DataFrames begin
