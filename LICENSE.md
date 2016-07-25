@@ -22,5 +22,5 @@ The JDBC.jl package is licensed under the MIT "Expat" License:
 > SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 This repository includes derby.jar and toursdb.jar from the Apache Derby projects, 
-distributed under the Apache License, version 2. These artifacts are dymaically 
+distributed under the Apache License, version 2. These artifacts are dynamically 
 loaded during tests, and is not necessary for regular usage. 
