@@ -5,17 +5,16 @@
 
 This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
 
-The API provided by this package is very similar to the native JDBC API, with the necessary changes to move from 
-an object oriented syntax to a Julia's more *functional* syntax. So while a Java method is transformed to a Julia function
-with the same name, the reciever in Java (the object before the dot) becomes the first argument to the Julia function. For
+The API provided by this package is very similar to the native JDBC API, with the necessary changes to move from Java's object-oriented syntax to a Julia's more *functional* syntax. So while a Java method is transformed to a Julia function
+with the same name, the receiver in Java (the object before the dot) becomes the first argument to the Julia function. For
 example, `statement.executeQuery(sql_string)` in Java becomes, in Julia: `executeQuery(statement, sql_string)`. 
 Therefore, some familiarity with JDBC is useful for working with this package. 
 
 In JDBC, accessing the data frome a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
 
-There is however, an optional `readtable` method that is defined when `DataFrames` is loaded. This converts a JDBC resultset into a Julia DataFrame. 
+There is however, an optional `readtable` method that is defined when `[DataFrames](https://github.com/JuliaStats/DataFrames.jl)` is loaded. This converts a JDBC resultset into a DataFrame. 
 
-This package is now `julia v0.4` and later only. The last released version of this package that works with `julia v0.3` is `v0.0.3`
+This package is now `julia v0.4` and later only. The last released version of this package that works with `julia v0.3` is `v0.0.3`.
 
 
 
@@ -42,7 +41,7 @@ rs = executeQuery(stmt, "select * from firsttable")
  end
 ```
 
-To get each row as a julia tuple, iterate over the result set using `JDBCRowIterator`.  Values in the tuple will be of Nullable type if they are declared to be nullable in the database.
+To get each row as a Julia tuple, iterate over the result set using `JDBCRowIterator`.  Values in the tuple will be of Nullable type if they are declared to be nullable in the database.
 
 ```julia
 for r in JDBCRowIterator(rs)
