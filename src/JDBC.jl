@@ -11,8 +11,8 @@ else
 end
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
-        getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate, 
-        getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean, getMetaData, getColumnCount, 
+        getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,
+        getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean, getMetaData, getColumnCount,
         getColumnType, getColumnName, executeUpdate, execute, commit, rollback, setAutoCommit, getResultSet
 
 module DriverManager
@@ -70,7 +70,7 @@ Prepares the Statement for the given query
 ### Returns
 The JPreparedStatement object
 """
-prepareStatement(connection::JConnection, query::AbstractString) = jcall(connection, "prepareStatement", JPreparedStatement, (JString,), query) 
+prepareStatement(connection::JConnection, query::AbstractString) = jcall(connection, "prepareStatement", JPreparedStatement, (JString,), query)
 
 """
 ```
@@ -85,7 +85,7 @@ Prepares the Callable Statement for the given query
 ### Returns
 The JCallableStatement object
 """
-prepareCall(connection::JConnection, query::AbstractString) = jcall(connection, "prepareCall", JCallableStatement, (JString,), query) 
+prepareCall(connection::JConnection, query::AbstractString) = jcall(connection, "prepareCall", JCallableStatement, (JString,), query)
 
 
 """
@@ -289,7 +289,7 @@ for s in [("String", :JString),
             ("BigDecimal", :(@jimport(java.math.BigDecimal)))]
         m = symbol(string("get", s[1]))
         n = symbol(string("set", s[1]))
-        v = quote 
+        v = quote
             $m(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = jcall(rs, $(string(m)), $(s[2]), (JString,), fld)
             $m(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = jcall(rs, $(string(m)), $(s[2]), (jint,), fld)
             $n(stmt::@compat(Union{JPreparedStatement, JCallableStatement}), idx::Integer, v ) = jcall(stmt, $(string(n)), Void, (jint, $(s[2])), idx, v)
@@ -301,7 +301,7 @@ end
 ```
 getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
 ```
-Returns the Date object based on the result set or a callable statement. The value is extracted based on the column name. 
+Returns the Date object based on the result set or a callable statement. The value is extracted based on the column name.
 
 ### Args
 * stmt: The JResultSet or JCallableStatement object
@@ -317,7 +317,7 @@ getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
 ```
 getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer)
 ```
-Returns the Date object based on the result set or a callable statement. The value is extracted based on the column number. 
+Returns the Date object based on the result set or a callable statement. The value is extracted based on the column number.
 
 ### Args
 * stmt: The JResultSet or JCallableStatement object
@@ -333,7 +333,7 @@ getDate(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = Date
 ```
 getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
 ```
-Returns the Timestamp object based on the result set or a callable statement. The value is extracted based on the column name. 
+Returns the Timestamp object based on the result set or a callable statement. The value is extracted based on the column name.
 
 ### Args
 * stmt: The JResultSet or JCallableStatement object
@@ -349,7 +349,7 @@ getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractSt
 ```
 getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer)
 ```
-Returns the Timestamp object based on the result set or a callable statement. The value is extracted based on the column number. 
+Returns the Timestamp object based on the result set or a callable statement. The value is extracted based on the column number.
 
 ### Args
 * stmt: The JResultSet or JCallableStatement object
@@ -365,7 +365,7 @@ getTimestamp(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) =
 ```
 getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
 ```
-Returns the Time object based on the result set or a callable statement. The value is extracted based on the column name. 
+Returns the Time object based on the result set or a callable statement. The value is extracted based on the column name.
 
 ### Args
 * stmt: The JResultSet or JCallableStatement object
@@ -381,7 +381,7 @@ getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString)
 ```
 getTime(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer)
 ```
-Returns the Time object based on the result set or a callable statement. The value is extracted based on the column number. 
+Returns the Time object based on the result set or a callable statement. The value is extracted based on the column number.
 
 ### Args
 * stmt: The JResultSet or JCallableStatement object
@@ -453,7 +453,7 @@ Returns the column's name based on the JResultSetMetaData object and the column 
 * col: The column number
 
 ### Returns
-The column name 
+The column name
 """
 getColumnName(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnName", JString, (jint,), col)
 
@@ -462,7 +462,7 @@ isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", j
 
 @require DataFrames begin
 using DataFrames
-function DataFrames.readtable(rs::JResultSet) 
+function DataFrames.readtable(rs::JResultSet)
     rsmd = getMetaData(rs)
     cols = getColumnCount(rsmd)
     columns = Array(Any, cols)
@@ -474,7 +474,7 @@ function DataFrames.readtable(rs::JResultSet)
         missings[c] = Array(Bool, 0)
         cnames[c] = DataFrames.makeidentifier(getColumnName(rsmd, c))
         get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
-    end 
+    end
     for r in rs
         for c in 1:cols
             push!(columns[c], get_methods[c](rs, c))
@@ -483,17 +483,17 @@ function DataFrames.readtable(rs::JResultSet)
             else
                 push!(missings[c], false)
             end
-        end       
+        end
     end
 
     dcolumns = Array(Any, cols)
-    
+
     for c in 1:cols
-        dcolumns[c] = DataArrays.DataArray(columns[c], missings[c])  
-    end 
+        dcolumns[c] = DataArrays.DataArray(columns[c], missings[c])
+    end
     return DataFrame(dcolumns, cnames)
 end
-end #@require 
+end #@require
 
 function jdbc_get_method(coltype::Integer)
     return get_method_dict[coltype]
@@ -538,7 +538,7 @@ global const JDBC_COLTYPE_VARBINARY = -3
 global const JDBC_COLTYPE_VARCHAR = 12
 
 #Map column types to their respective get methods
-global const get_method_dict = @compat Dict( 
+global const get_method_dict = @compat Dict(
         # JDBC_COLTYPE_ARRAY => 2003,
         JDBC_COLTYPE_BIGINT => getLong,
         # JDBC_COLTYPE_BINARY => -2,
@@ -628,11 +628,16 @@ function Base.next(iter::JDBCRowIterator, state)
         else
             row[c] = val
         end
-    end       
-        
+    end
+
     tuple(row...), state
 end
 Base.done(iter::JDBCRowIterator, state) = done(iter.rs, state)
+
+if (VERSION > v"0.5-")
+    Base.iteratorsize(JDBCRowIterator) = Base.SizeUnknown()
+    Base.iteratoreltype(JDBCRowIterator) = Base.EltypeUnknown()
+end
 
 export getTableMetaData, JDBCRowIterator
 
