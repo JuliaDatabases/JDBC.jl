@@ -1,5 +1,5 @@
 julia 0.4
-JavaCall 0.3.1
+JavaCall 0.4.1
 Requires
 Compat
 DBAPI
