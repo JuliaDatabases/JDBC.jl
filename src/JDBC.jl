@@ -18,11 +18,11 @@ export DriverManager, createStatement, prepareStatement, prepareCall, executeQue
 module DriverManager
     using JavaCall
     JDriverManager = @jimport java.sql.DriverManager
-    function getConnection(url::ASCIIString)
+    function getConnection(url::AbstractString)
         jcall(JDriverManager, "getConnection", @jimport(java.sql.Connection), (JString, ), url)
     end
 
-    function getConnection(url::ASCIIString, props::Dict)
+    function getConnection(url::AbstractString, props::Dict)
         jcall(JDriverManager, "getConnection", @jimport(java.sql.Connection), (JString,  @jimport(java.util.Properties)), url, props)
     end
 
@@ -287,8 +287,8 @@ for s in [("String", :JString),
             ("Byte", :jbyte),
             ("URL", :(@jimport(java.net.URL))),
             ("BigDecimal", :(@jimport(java.math.BigDecimal)))]
-        m = symbol(string("get", s[1]))
-        n = symbol(string("set", s[1]))
+        m = Symbol(string("get", s[1]))
+        n = Symbol(string("set", s[1]))
         v = quote
             $m(rs::@compat(Union{JResultSet, JCallableStatement}), fld::AbstractString) = jcall(rs, $(string(m)), $(s[2]), (JString,), fld)
             $m(rs::@compat(Union{JResultSet, JCallableStatement}), fld::Integer) = jcall(rs, $(string(m)), $(s[2]), (jint,), fld)
@@ -635,8 +635,8 @@ end
 Base.done(iter::JDBCRowIterator, state) = done(iter.rs, state)
 
 if (VERSION > v"0.5-")
-    Base.iteratorsize(JDBCRowIterator) = Base.SizeUnknown()
-    Base.iteratoreltype(JDBCRowIterator) = Base.EltypeUnknown()
+    Base.iteratorsize(::JDBCRowIterator) = Base.SizeUnknown()
+    Base.iteratoreltype(::JDBCRowIterator) = Base.EltypeUnknown()
 end
 
 export getTableMetaData, JDBCRowIterator
