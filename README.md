@@ -1,6 +1,6 @@
 # JDBC - Julia interface to Java JDBC database drivers
 
-[![Build Status](https://travis-ci.org/JuliaDB/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDB/JDBC.jl)  [![Build status](https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true)](https://ci.appveyor.com/project/aviks/jdbc-jl)   [![JDBC](http://pkg.julialang.org/badges/JDBC_0.4.svg)](http://pkg.julialang.org/?pkg=JDBC)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.5.svg)](http://pkg.julialang.org/?pkg=JDBC)
+[![Build Status](https://travis-ci.org/JuliaDB/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDB/JDBC.jl)  [![Build status](https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true)](https://ci.appveyor.com/project/aviks/jdbc-jl)   [![JDBC](http://pkg.julialang.org/badges/JDBC_0.4.svg)](http://pkg.julialang.org/?pkg=JDBC)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.5.svg)](http://pkg.julialang.org/?pkg=JDBC)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.6.svg)](http://pkg.julialang.org/?pkg=JDBC)
 
 
 This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
@@ -19,7 +19,7 @@ This package is now `julia v0.4` and later only. The last released version of th
 
 
 
-###Initialisation
+### Initialisation
 
 To start it up, add the database driver jar file to the classpath, and then initialise the JVM. 
 
@@ -28,7 +28,7 @@ using JDBC
 JavaCall.addClassPath("/home/me/derby/derby.jar")
 JDBC.init() # or JavaCall.init()
  ```
-###Basic Usage
+### Basic Usage
 
 As described above, using this package is very similar to using a JDBC driver in Java. Write the Julia code in a way that is very similar to how corresponding Java code would look. 
 
@@ -63,7 +63,7 @@ getBoolean
 getNString
 getURL
 ```
-###Updates
+### Updates
 
 While inserts and updates can be done via a fully specified SQL string using the `Statement` instance above, it is much safer to do so via a `PreparedStatement`. A `PreparedStatement` has setter functions defined for different types, corresponding to the getter functions shown above. 
 
@@ -88,7 +88,7 @@ Also note that for a `Statement`, the query itself is specified in the correspon
 
 The connections and the statements should be closed via their `close(...)` functions. `commit(connection)`, `rollback(connection)` and `setAutoCommit(true|false)` do the obvious things.
 
-###Metadata
+### Metadata
 
 Pass the `JResultSet` object from `executeQuery` to `getTableMetaData` to get an array of `(column_name, column_type)` tuples.
 
@@ -99,7 +99,7 @@ rs = executeQuery(stmt, "select * from firsttable")
 metadata = getTableMetaData(rs)
 ```
 
-###DBAPI.jl Interface
+### DBAPI.jl Interface
 
 [DBAPI.jl](https://github.com/JuliaDB/DBAPI.jl) is implemented in this package.  To connect:
 
@@ -134,7 +134,7 @@ end
 
 To close the cursor call `close` on the cursor instance.
 
-###Caveats
+### Caveats
  * BLOB's are not yet supported. 
  * While a large part of the JDBC API has been wrapped, not everything is. Please file an issue if you find anything missing that you need. However, it is very easy to call the Java method directly using `JavaCall`. Please look at the `JDBC.jl` source for inspiration if you need to do that. 
  * Both Julia `DateTime` and Java `java.sql.Date` do not store any timezone information within them. I believe we are doing the right thing here, and everything should be consistent. However timezone is easy to get wrong, so please double check if your application depends on accurate times. 
