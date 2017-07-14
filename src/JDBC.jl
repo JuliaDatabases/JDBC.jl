@@ -465,13 +465,13 @@ using DataFrames
 function DataFrames.readtable(rs::JResultSet)
     rsmd = getMetaData(rs)
     cols = getColumnCount(rsmd)
-    columns = Array(Any, cols)
-    missings = Array(Any, cols)
-    cnames = Array(Symbol, cols)
-    get_methods = Array(Function, cols)
+    columns = Array{Any}(cols)
+    missings = Array{Any}(cols)
+    cnames = Array{Symbol}(cols)
+    get_methods = Array{Function}(cols)
     for c in 1:cols
-        columns[c] = Array(Any, 0)
-        missings[c] = Array(Bool, 0)
+        columns[c] = Array{Any}(0)
+        missings[c] = Array{Bool}(0)
         cnames[c] = DataFrames.makeidentifier(getColumnName(rsmd, c))
         get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
     end
@@ -486,7 +486,7 @@ function DataFrames.readtable(rs::JResultSet)
         end
     end
 
-    dcolumns = Array(Any, cols)
+    dcolumns = Array{Any}(cols)
 
     for c in 1:cols
         dcolumns[c] = DataArrays.DataArray(columns[c], missings[c])
@@ -586,7 +586,7 @@ Returns an array of (column name, column type) tuples.
 function getTableMetaData(rs::JResultSet)
     rsmd = getMetaData(rs)
     cols = getColumnCount(rsmd)
-    mdarr = Array(Any, cols)
+    mdarr = Array{Any}(cols)
     for i = 1:cols
         mdarr[i] = (getColumnName(rsmd, i), getColumnType(rsmd, i))
     end
@@ -605,8 +605,8 @@ type JDBCRowIterator
     function JDBCRowIterator(rs::JResultSet)
         rsmd = getMetaData(rs)
         ncols = getColumnCount(rsmd)
-        get_methods = Array(Function, ncols)
-        isnullable = Array(Int, ncols)
+        get_methods = Array{Function}(ncols)
+        isnullable = Array{Int}(ncols)
         for c in 1:ncols
             get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
             isnullable[c] = isNullable(rsmd, c)
@@ -618,7 +618,7 @@ end
 
 Base.start(iter::JDBCRowIterator) = true
 function Base.next(iter::JDBCRowIterator, state)
-    row = Array(Any, iter.ncols)
+    row = Array{Any}(iter.ncols)
     for c in 1:iter.ncols
         val = iter.get_methods[c](iter.rs, c)
         if wasNull(iter.rs)

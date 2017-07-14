@@ -1,7 +1,7 @@
 using DBAPI
 using JavaCall
 
-abstract JDBCInterface <: DatabaseInterface
+@compat abstract type JDBCInterface<:DatabaseInterface; end
 
 type JDBCConnection <: DatabaseConnection{JDBCInterface}
     conn::Nullable{JConnection}
