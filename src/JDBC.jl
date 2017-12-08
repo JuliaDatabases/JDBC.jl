@@ -462,11 +462,12 @@ isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", j
 
 @require DataFrames begin
 using DataFrames
+using DataArrays
 function DataFrames.readtable(rs::JResultSet)
     rsmd = getMetaData(rs)
     cols = getColumnCount(rsmd)
-    columns = Array{Any}(cols)
-    missings = Array{Any}(cols)
+    columns = Array{Array{Any}}(cols)
+    missings = Array{Array{Bool}}(cols)
     cnames = Array{Symbol}(cols)
     get_methods = Array{Function}(cols)
     for c in 1:cols
