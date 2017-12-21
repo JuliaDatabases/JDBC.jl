@@ -497,6 +497,7 @@ getColumnName(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnNa
 
 isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", jint, (jint,), col)
 
+
 function jdbc_get_method(coltype::Integer)
     return get_method_dict[coltype]
 end
