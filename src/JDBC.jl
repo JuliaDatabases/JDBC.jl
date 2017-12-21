@@ -3,6 +3,10 @@ module JDBC
 using JavaCall
 using Compat
 using Requires
+using DBAPI
+
+import DBAPI: show, connect, close, isopen, commit, rollback, cursor,
+              connection, execute!, rows
 
 if VERSION < v"0.4-"
     using Dates
@@ -271,9 +275,11 @@ The JResultSet object.
 """
 getResultSet(stmt::JStatement) = jcall(stmt, "getResultSet", JResultSet, ())
 
+isdone(rs::JResultSet) = jcall(rs, "next", jboolean, ()) == 0
+
 Base.start(rs::JResultSet) = true
 Base.next(rs::JResultSet, state) = rs, state
-Base.done(rs::JResultSet, state)  = (jcall(rs, "next", jboolean, ()) == 0)
+Base.done(rs::JResultSet, state) = isdone(rs)
 
 
 for s in [("String", :JString),
@@ -413,6 +419,37 @@ getMetaData(rs::JResultSet) = jcall(rs, "getMetaData", JResultSetMetaData, ())
 
 """
 ```
+absolute!(rs::JResultSet, row::Int)
+```
+Move the cursor to the specified row.
+
+### Args
+* rs: The JResultSet object.
+* row: The row to move to.
+
+### Returns
+A boolean indicating success.
+"""
+absolute!(rs::JResultSet, row::Int) = jcall(rs, "absolute", jboolean, (jint,), row)
+
+
+"""
+```
+beforeFirst!(rs::JResultSet)
+```
+Move the cursor to the front of the `JResultSet`, before the first row.
+
+### Args
+* rs: The JResultSet object.
+
+### Returns
+`nothing`
+"""
+beforeFirst!(rs::JResultSet) = jcall(rs, "beforeFirst", Void, ())
+
+
+"""
+```
 getColumnCount(rsmd::JResultSetMetaData)
 ```
 Returns the number of columns based on the JResultSetMetaData object
@@ -459,41 +496,6 @@ getColumnName(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnNa
 
 
 isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", jint, (jint,), col)
-
-@require DataFrames begin
-using DataFrames
-function DataFrames.readtable(rs::JResultSet)
-    rsmd = getMetaData(rs)
-    cols = getColumnCount(rsmd)
-    columns = Array{Any}(cols)
-    missings = Array{Any}(cols)
-    cnames = Array{Symbol}(cols)
-    get_methods = Array{Function}(cols)
-    for c in 1:cols
-        columns[c] = Array{Any}(0)
-        missings[c] = Array{Bool}(0)
-        cnames[c] = DataFrames.makeidentifier(getColumnName(rsmd, c))
-        get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
-    end
-    for r in rs
-        for c in 1:cols
-            push!(columns[c], get_methods[c](rs, c))
-            if wasNull(rs)
-                push!(missings[c], true)
-            else
-                push!(missings[c], false)
-            end
-        end
-    end
-
-    dcolumns = Array{Any}(cols)
-
-    for c in 1:cols
-        dcolumns[c] = DataArrays.DataArray(columns[c], missings[c])
-    end
-    return DataFrame(dcolumns, cnames)
-end
-end #@require
 
 function jdbc_get_method(coltype::Integer)
     return get_method_dict[coltype]
@@ -642,5 +644,9 @@ end
 export getTableMetaData, JDBCRowIterator
 
 include("dbapi.jl")
+
+@require DataStreams begin
+    include("datastreams.jl")
+end
 
 end # module
