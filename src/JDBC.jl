@@ -8,11 +8,7 @@ using DBAPI
 import DBAPI: show, connect, close, isopen, commit, rollback, cursor,
               connection, execute!, rows
 
-if VERSION < v"0.4-"
-    using Dates
-else
-    using Base.Dates
-end
+using Base.Dates
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,
@@ -637,10 +633,8 @@ function Base.next(iter::JDBCRowIterator, state)
 end
 Base.done(iter::JDBCRowIterator, state) = done(iter.rs, state)
 
-if (VERSION > v"0.5-")
-    Base.iteratorsize(::JDBCRowIterator) = Base.SizeUnknown()
-    Base.iteratoreltype(::JDBCRowIterator) = Base.EltypeUnknown()
-end
+Base.iteratorsize(::JDBCRowIterator) = Base.SizeUnknown()
+Base.iteratoreltype(::JDBCRowIterator) = Base.EltypeUnknown()
 
 export getTableMetaData, JDBCRowIterator
 
