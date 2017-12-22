@@ -33,6 +33,13 @@ struct Source
 end
 Source(rs::JResultSet) = Source(rs, getMetaData(rs))
 Source(stmt::JStatement, query::AbstractString) = Source(executeQuery(stmt, query))
+function Source(csr::JDBCCursor)
+    if isnull(csr.rs)
+        throw(ArgumentError("A cursor must contain a valid JResultSet to construct a Source."))
+    else
+        Source(get(csr.rs))
+    end
+end
 
 # these methods directly access the underlying JResultSet and are used in Schema constructor
 function coltype(s::Source, col::Int)
@@ -80,4 +87,5 @@ end
 DataFrames.readtable(s::Source) = Data.close!(Data.stream!(s, DataFrame))
 DataFrames.readtable(rs::JResultSet) = readtable(Source(rs))
 DataFrames.readtable(stmt::JStatement, query::AbstractString) = readtable(Source(stmt, query))
+DataFrames.readtable(csr::JDBCCursor) = readtable(Source(csr))
 
