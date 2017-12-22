@@ -1,6 +1,6 @@
 using JavaCall
 
-@compat abstract type JDBCInterface<:DatabaseInterface; end
+abstract type JDBCInterface<:DatabaseInterface; end
 
 type JDBCConnection <: DatabaseConnection{JDBCInterface}
     conn::Nullable{JConnection}
