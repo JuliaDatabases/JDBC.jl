@@ -1,7 +1,6 @@
-using DBAPI
 using JavaCall
 
-@compat abstract type JDBCInterface<:DatabaseInterface; end
+abstract type JDBCInterface<:DatabaseInterface; end
 
 type JDBCConnection <: DatabaseConnection{JDBCInterface}
     conn::Nullable{JConnection}
@@ -34,9 +33,6 @@ function JDBCCursor(conn)
 end
 
 export JDBCInterface, JDBCError, JDBCConnection, JDBCCursor
-
-import DBAPI: show, connect, close, isopen, commit, rollback, cursor,
-              connection, execute!, rows
 
 """
 Open a JDBC Connection to the specified `host`.  The username and password can be optionally passed
