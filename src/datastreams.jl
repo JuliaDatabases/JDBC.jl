@@ -33,6 +33,7 @@ struct Source
 end
 Source(rs::JResultSet) = Source(rs, getMetaData(rs))
 Source(stmt::JStatement, query::AbstractString) = Source(executeQuery(stmt, query))
+Source(rowit::JDBCRowIterator) = Source(rowit.rs)
 function Source(csr::JDBCCursor)
     if isnull(csr.rs)
         throw(ArgumentError("A cursor must contain a valid JResultSet to construct a Source."))
@@ -87,5 +88,5 @@ end
 DataFrames.readtable(s::Source) = Data.close!(Data.stream!(s, DataFrame))
 DataFrames.readtable(rs::JResultSet) = readtable(Source(rs))
 DataFrames.readtable(stmt::JStatement, query::AbstractString) = readtable(Source(stmt, query))
-DataFrames.readtable(csr::JDBCCursor) = readtable(Source(csr))
+DataFrames.readtable(csr::Union{JDBCCursor,JDBCRowIterator}) = readtable(Source(csr))
 
