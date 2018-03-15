@@ -1,13 +1,14 @@
 #This file is part of JDBC.jl. License is MIT.
 module JDBC
 using JavaCall
-using Requires
+using Compat
+using Compat.Dates
 using DBAPI
+using Compat: Nullable
 
 import DBAPI: show, connect, close, isopen, commit, rollback, cursor,
               connection, execute!, rows
-
-using Base.Dates
+import Compat: IteratorSize, IteratorEltype, start, next, done
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,
@@ -99,7 +100,7 @@ Commits the transaction
 ### Returns
 None
 """
-commit(connection::JConnection) = jcall(connection, "commit", Void, ())
+commit(connection::JConnection) = jcall(connection, "commit", Nothing, ())
 
 
 """
@@ -114,7 +115,7 @@ Rolls back the transactions.
 ### Returns
 None
 """
-rollback(connection::JConnection) = jcall(connection, "rollback", Void, ())
+rollback(connection::JConnection) = jcall(connection, "rollback", Nothing, ())
 
 
 """
@@ -129,7 +130,7 @@ Set the Auto Commit flag to either true or false. If set to false, commit has to
 ### Returns
 None
 """
-setAutoCommit(connection::JConnection, x::Bool) = jcall(connection, "setAutoCommit", Void, (jboolean,), x)
+setAutoCommit(connection::JConnection, x::Bool) = jcall(connection, "setAutoCommit", Nothing, (jboolean,), x)
 
 
 """
@@ -237,7 +238,7 @@ Clears the currently held parameters in a JPreparedStatement object or a JCallab
 ### Returns
 None
 """
-clearParameters(stmt::Union{JPreparedStatement, JCallableStatement}) = jcall(stmt, "clearParameters", Void, ())
+clearParameters(stmt::Union{JPreparedStatement, JCallableStatement}) = jcall(stmt, "clearParameters", Nothing, ())
 
 
 """
@@ -253,7 +254,7 @@ Sets the fetch size in a JStatement or a JPreparedStatement object or a JCallabl
 ### Returns
 None
 """
-setFetchSize(stmt::Union{JStatement, JPreparedStatement, JCallableStatement }, x::Integer) = jcall(stmt, "setFetchSize", Void, (jint,), x )
+setFetchSize(stmt::Union{JStatement, JPreparedStatement, JCallableStatement }, x::Integer) = jcall(stmt, "setFetchSize", Nothing, (jint,), x )
 
 
 """
@@ -272,28 +273,28 @@ getResultSet(stmt::JStatement) = jcall(stmt, "getResultSet", JResultSet, ())
 
 isdone(rs::JResultSet) = jcall(rs, "next", jboolean, ()) == 0
 
-Base.start(rs::JResultSet) = true
-Base.next(rs::JResultSet, state) = rs, state
-Base.done(rs::JResultSet, state) = isdone(rs)
+start(rs::JResultSet) = true
+next(rs::JResultSet, state) = rs, state
+done(rs::JResultSet, state) = isdone(rs)
 
 
 for s in [("String", :JString),
-            ("NString", :JString),
-            ("Boolean", :jboolean),
-            ("Short", :jshort),
-            ("Int", :jint),
-            ("Long", :jlong),
-            ("Float", :jfloat),
-            ("Double", :jdouble),
-            ("Byte", :jbyte),
-            ("URL", :(@jimport(java.net.URL))),
-            ("BigDecimal", :(@jimport(java.math.BigDecimal)))]
+          ("NString", :JString),
+          ("Boolean", :jboolean),
+          ("Short", :jshort),
+          ("Int", :jint),
+          ("Long", :jlong),
+          ("Float", :jfloat),
+          ("Double", :jdouble),
+          ("Byte", :jbyte),
+          ("URL", :(@jimport(java.net.URL))),
+          ("BigDecimal", :(@jimport(java.math.BigDecimal)))]
         m = Symbol(string("get", s[1]))
         n = Symbol(string("set", s[1]))
         v = quote
             $m(rs::Union{JResultSet, JCallableStatement}, fld::AbstractString) = jcall(rs, $(string(m)), $(s[2]), (JString,), fld)
             $m(rs::Union{JResultSet, JCallableStatement}, fld::Integer) = jcall(rs, $(string(m)), $(s[2]), (jint,), fld)
-            $n(stmt::Union{JPreparedStatement, JCallableStatement}, idx::Integer, v ) = jcall(stmt, $(string(n)), Void, (jint, $(s[2])), idx, v)
+            $n(stmt::Union{JPreparedStatement, JCallableStatement}, idx::Integer, v ) = jcall(stmt, $(string(n)), Nothing, (jint, $(s[2])), idx, v)
         end
         eval(v)
 end
@@ -393,7 +394,7 @@ The Time object.
 """
 getTime(rs::Union{JResultSet, JCallableStatement}, fld::Integer) = convert(DateTime, jcall(rs, "getTime", @jimport(java.sql.Time), (jint,), fld))
 
-Base.close(x::Union{JResultSet, JStatement, JPreparedStatement, JCallableStatement, JConnection}) = jcall(x, "close", Void, ())
+Base.close(x::Union{JResultSet, JStatement, JPreparedStatement, JCallableStatement, JConnection}) = jcall(x, "close", Nothing, ())
 
 wasNull(rs::JResultSet) = (jcall(rs, "wasNull", jboolean, ()) != 0)
 
@@ -440,7 +441,7 @@ Move the cursor to the front of the `JResultSet`, before the first row.
 ### Returns
 `nothing`
 """
-beforeFirst!(rs::JResultSet) = jcall(rs, "beforeFirst", Void, ())
+beforeFirst!(rs::JResultSet) = jcall(rs, "beforeFirst", Nothing, ())
 
 
 """
@@ -584,7 +585,7 @@ Returns an array of (column name, column type) tuples.
 function getTableMetaData(rs::JResultSet)
     rsmd = getMetaData(rs)
     cols = getColumnCount(rsmd)
-    mdarr = Array{Any}(cols)
+    mdarr = Array{Any}(undef, cols)
     for i = 1:cols
         mdarr[i] = (getColumnName(rsmd, i), getColumnType(rsmd, i))
     end
@@ -594,17 +595,17 @@ end
 """
 Iterator to get rows of tables as array of tuples.
 """
-type JDBCRowIterator
+mutable struct JDBCRowIterator
     rs::JResultSet
     ncols::Int
-    get_methods::Array{Function, 1}
-    isnullable::Array{Int, 1}
+    get_methods::Vector{Function}
+    isnullable::Vector{Int}
 
     function JDBCRowIterator(rs::JResultSet)
         rsmd = getMetaData(rs)
         ncols = getColumnCount(rsmd)
-        get_methods = Array{Function}(ncols)
-        isnullable = Array{Int}(ncols)
+        get_methods = Array{Function}(undef, ncols)
+        isnullable = Array{Int}(undef, ncols)
         for c in 1:ncols
             get_methods[c] = jdbc_get_method(getColumnType(rsmd, c))
             isnullable[c] = isNullable(rsmd, c)
@@ -614,15 +615,15 @@ type JDBCRowIterator
     end
 end
 
-Base.start(iter::JDBCRowIterator) = true
-function Base.next(iter::JDBCRowIterator, state)
-    row = Array{Any}(iter.ncols)
+start(iter::JDBCRowIterator) = true
+function next(iter::JDBCRowIterator, state)
+    row = Array{Any}(undef, iter.ncols)
     for c in 1:iter.ncols
         val = iter.get_methods[c](iter.rs, c)
         if wasNull(iter.rs)
-            row[c] = Nullable{typeof(val)}()
+            row[c] = missing
         elseif iter.isnullable[c] == COLUMN_NULLABLE || iter.isnullable[c] == COLUMN_NULLABLE_UNKNOWN
-            row[c] = Nullable(val)
+            row[c] = val
         else
             row[c] = val
         end
@@ -630,17 +631,16 @@ function Base.next(iter::JDBCRowIterator, state)
 
     tuple(row...), state
 end
-Base.done(iter::JDBCRowIterator, state) = done(iter.rs, state)
+done(iter::JDBCRowIterator, state) = done(iter.rs, state)
 
-Base.iteratorsize(::JDBCRowIterator) = Base.SizeUnknown()
-Base.iteratoreltype(::JDBCRowIterator) = Base.EltypeUnknown()
+IteratorSize(::JDBCRowIterator) = Base.SizeUnknown()
+IteratorEltype(::JDBCRowIterator) = Base.EltypeUnknown()
 
 export getTableMetaData, JDBCRowIterator
 
-include("dbapi.jl")
 
-@require DataStreams begin
-    include("datastreams.jl")
-end
+include("dbapi.jl")
+include("datastreams.jl")
+
 
 end # module

@@ -2,14 +2,7 @@
 using DataFrames
 using JavaCall
 using JDBC
-using Base.Test
-
-if VERSION < v"0.4-"
-    using Dates
-else
-    using Base.Dates
-end
-using Compat
+using Compat, Compat.Dates, Compat.Test
 
 JavaCall.addClassPath(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
 JavaCall.init()
@@ -19,11 +12,11 @@ stmt = createStatement(conn)
 rs = executeQuery(stmt, "select * from airlines")
 
 airlines=readtable(rs)
-@assert size(airlines) == (2,9)
-@assert airlines[1, :BASIC_RATE] == 0.18
-@assert airlines[2, :BASIC_RATE] == 0.19
-@assert airlines[1, :ECONOMY_SEATS] == 20
-@assert airlines[1, :AIRLINE] == "AA"
+@test size(airlines) == (2,9)
+@test airlines[1, :BASIC_RATE] == 0.18
+@test airlines[2, :BASIC_RATE] == 0.19
+@test airlines[1, :ECONOMY_SEATS] == 20
+@test airlines[1, :AIRLINE] == "AA"
 
 close(rs)
 
@@ -32,36 +25,36 @@ rs = executeQuery(stmt, "select * from airlines")
 iter = JDBCRowIterator(rs)
 airlines = collect(iter)
 
-@assert getTableMetaData(rs) == [("AIRLINE", JDBC.JDBC_COLTYPE_CHAR),
-                                 ("AIRLINE_FULL", JDBC.JDBC_COLTYPE_VARCHAR),
-                                 ("BASIC_RATE", JDBC.JDBC_COLTYPE_DOUBLE),
-                                 ("DISTANCE_DISCOUNT", JDBC.JDBC_COLTYPE_DOUBLE),
-                                 ("BUSINESS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
-                                 ("FIRSTCLASS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
-                                 ("ECONOMY_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
-                                 ("BUSINESS_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
-                                 ("FIRSTCLASS_SEATS", JDBC.JDBC_COLTYPE_INTEGER)]
-@assert size(airlines) == (2,)
-@assert length(airlines[1]) == 9
-@assert airlines[1][3].value == 0.18
-@assert airlines[2][3].value == 0.19
-@assert airlines[1][7].value == 20
-@assert airlines[1][1] == "AA"
+@test getTableMetaData(rs) == [("AIRLINE", JDBC.JDBC_COLTYPE_CHAR),
+                               ("AIRLINE_FULL", JDBC.JDBC_COLTYPE_VARCHAR),
+                               ("BASIC_RATE", JDBC.JDBC_COLTYPE_DOUBLE),
+                               ("DISTANCE_DISCOUNT", JDBC.JDBC_COLTYPE_DOUBLE),
+                               ("BUSINESS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
+                               ("FIRSTCLASS_LEVEL_FACTOR", JDBC.JDBC_COLTYPE_DOUBLE),
+                               ("ECONOMY_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
+                               ("BUSINESS_SEATS", JDBC.JDBC_COLTYPE_INTEGER),
+                               ("FIRSTCLASS_SEATS", JDBC.JDBC_COLTYPE_INTEGER)]
+@test size(airlines) == (2,)
+@test length(airlines[1]) == 9
+@test airlines[1][3].value == 0.18
+@test airlines[2][3].value == 0.19
+@test airlines[1][7].value == 20
+@test airlines[1][1] == "AA"
 close(rs)
 
 rs = executeQuery(stmt, "select * from flights")
 flights=readtable(rs)
 size(flights) == (542,10)
-@assert flights[1, :FLIGHT_ID]=="AA1111"
-@assert flights[1, :FLYING_TIME] == 1.328
-@assert flights[1, :DEPART_TIME]==DateTime(1970, 1, 1, 9,0,0)
-@assert flights[1, :ARRIVE_TIME]==DateTime(1970, 1, 1, 9, 19,0)
-@assert flights[542, :FLYING_TIME] == 0.622
-@assert flights[542, :DEPART_TIME]==DateTime(1970, 1, 1, 19,0,0)
-@assert flights[542, :ARRIVE_TIME]==DateTime(1970, 1, 1, 19, 37,0)
-@assert flights[541, :FLYING_TIME] == 10.926
-@assert flights[541, :DEPART_TIME]==DateTime(1970, 1, 1, 5,0,0)
-@assert flights[541, :ARRIVE_TIME]==DateTime(1970, 1, 1, 17, 55,0)
+@test flights[1, :FLIGHT_ID]=="AA1111"
+@test flights[1, :FLYING_TIME] == 1.328
+@test flights[1, :DEPART_TIME]==DateTime(1970, 1, 1, 9,0,0)
+@test flights[1, :ARRIVE_TIME]==DateTime(1970, 1, 1, 9, 19,0)
+@test flights[542, :FLYING_TIME] == 0.622
+@test flights[542, :DEPART_TIME]==DateTime(1970, 1, 1, 19,0,0)
+@test flights[542, :ARRIVE_TIME]==DateTime(1970, 1, 1, 19, 37,0)
+@test flights[541, :FLYING_TIME] == 10.926
+@test flights[541, :DEPART_TIME]==DateTime(1970, 1, 1, 5,0,0)
+@test flights[541, :ARRIVE_TIME]==DateTime(1970, 1, 1, 17, 55,0)
 
 close(rs)
 close(stmt)
@@ -72,7 +65,7 @@ close(conn)
 if isdir("tmptest")
     rm("tmptest", recursive=true)
 end
-@assert !isdir("tmptest")
+@test !isdir("tmptest")
 
 d=@compat Dict("create"=>"true")
 conn = DriverManager.getConnection("jdbc:derby:tmptest", d)
@@ -91,7 +84,7 @@ setString(ppstmt, 2,"TWENTY")
 executeUpdate(ppstmt)
 rs=executeQuery(stmt, "select * from FIRSTTABLE")
 ft = readtable(rs)
-@assert size(ft) == (2,2)
+@test size(ft) == (2,2)
 ft[1, :ID] == 10
 ft[1, :NAME] == "TEN"
 ft[1, :ID] == 20
@@ -114,22 +107,22 @@ dbconn = connect(JDBCInterface, "jdbc:derby:jar:(toursdb.jar)toursdb",
 csr = cursor(dbconn)
 execute!(csr, "select * from airlines")
 airlines = collect(rows(csr))
-@assert size(airlines) == (2,)
-@assert length(airlines[1]) == 9
-@assert airlines[1][3].value == 0.18
-@assert airlines[2][3].value == 0.19
-@assert airlines[1][7].value == 20
-@assert airlines[1][1] == "AA"
+@test size(airlines) == (2,)
+@test length(airlines[1]) == 9
+@test airlines[1][3].value == 0.18
+@test airlines[2][3].value == 0.19
+@test airlines[1][7].value == 20
+@test airlines[1][1] == "AA"
 close(csr)
 close(dbconn)
 
 try 
     DriverManager.getConnection("jdbc:derby:;shutdown=true")
-    @assert false "Derby Shutdown Exception should be thrown"
+    @test false "Derby Shutdown Exception should be thrown"
 catch 
 end
 
 rm("tmptest", recursive=true)
-@assert !isdir("tmptest")
+@test !isdir("tmptest")
 
 JavaCall.destroy()
