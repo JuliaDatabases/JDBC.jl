@@ -34,8 +34,8 @@ end
 Source(rs::JResultSet) = Source(rs, getMetaData(rs))
 Source(stmt::JStatement, query::AbstractString) = Source(executeQuery(stmt, query))
 Source(rowit::JDBCRowIterator) = Source(rowit.rs)
-function Source(csr::JDBCCursor)
-    if isnull(csr.rs)
+function Source(csr::Cursor)
+    if csr.rs == nothing
         throw(ArgumentError("A cursor must contain a valid JResultSet to construct a Source."))
     else
         Source(get(csr.rs))

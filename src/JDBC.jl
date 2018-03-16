@@ -3,7 +3,6 @@ module JDBC
 using JavaCall
 using Compat
 using Compat.Dates
-using DBAPI
 using Compat: Nullable
 
 import DBAPI: show, connect, close, isopen, commit, rollback, cursor,
@@ -12,35 +11,39 @@ import Compat: IteratorSize, IteratorEltype, start, next, done
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,
-        getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean, getMetaData, getColumnCount,
-        getColumnType, getColumnName, executeUpdate, execute, commit, rollback, setAutoCommit, getResultSet
+        getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean,
+        getMetaData, getColumnCount, getColumnType, getColumnName, executeUpdate, execute, commit,
+        rollback, setAutoCommit, getResultSet
+
 
 module DriverManager
     using JavaCall
-    JDriverManager = @jimport java.sql.DriverManager
+
+    const JDriverManager = @jimport java.sql.DriverManager
+
     function getConnection(url::AbstractString)
         jcall(JDriverManager, "getConnection", @jimport(java.sql.Connection), (JString, ), url)
     end
 
     function getConnection(url::AbstractString, props::Dict)
-        jcall(JDriverManager, "getConnection", @jimport(java.sql.Connection), (JString,  @jimport(java.util.Properties)), url, props)
+        jcall(JDriverManager, "getConnection", @jimport(java.sql.Connection),
+              (JString, @jimport(java.util.Properties)), url, props)
     end
-
 end
 
 
-
-JResultSet = @jimport java.sql.ResultSet
-JResultSetMetaData = @jimport java.sql.ResultSetMetaData
-JStatement = @jimport java.sql.Statement
-JPreparedStatement = @jimport java.sql.PreparedStatement
-JCallableStatement = @jimport java.sql.CallableStatement
-JConnection = @jimport java.sql.Connection
+const JResultSet = @jimport java.sql.ResultSet
+const JResultSetMetaData = @jimport java.sql.ResultSetMetaData
+const JStatement = @jimport java.sql.Statement
+const JPreparedStatement = @jimport java.sql.PreparedStatement
+const JCallableStatement = @jimport java.sql.CallableStatement
+const JConnection = @jimport java.sql.Connection
 
 const COLUMN_NO_NULLS = 0
 const COLUMN_NULLABLE = 1
 const COLUMN_NULLABLE_UNKNOWN = 2
 
+# TODO can we put this in init?
 init() = JavaCall.init()
 
 """
@@ -639,7 +642,7 @@ IteratorEltype(::JDBCRowIterator) = Base.EltypeUnknown()
 export getTableMetaData, JDBCRowIterator
 
 
-include("dbapi.jl")
+include("interface.jl")
 include("datastreams.jl")
 
 
