@@ -61,7 +61,7 @@ Closes the JDBCConnection `conn`.  Throws a `JDBCError` if connection is null.
 
 Returns `nothing`.
 """
-function close(conn::Connection)
+function Base.close(conn::Connection)
     isopen(conn) || throw(JDBCError("Cannot close null connection."))
     close(conn.conn)
     conn.conn = nothing
@@ -72,7 +72,7 @@ Close the JDBCCursor `csr`.  Throws a `JDBCError` if cursor is not initialized.
 
 Returns `nothing`.
 """
-function close(csr::Cursor)
+function Base.close(csr::Cursor)
     csr.stmt == nothing && throw(JDBCError("Cannot close uninitialized cursor."))
     if csr.rs == nothing
         close(csr.rs)

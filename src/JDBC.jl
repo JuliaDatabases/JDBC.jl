@@ -5,8 +5,6 @@ using Compat
 using Compat.Dates
 using Compat: Nullable
 
-import DBAPI: show, connect, close, isopen, commit, rollback, cursor,
-              connection, execute!, rows
 import Compat: IteratorSize, IteratorEltype, start, next, done
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
