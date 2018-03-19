@@ -1,5 +1,4 @@
 using DataStreams
-using DataFrames
 
 const column_types = Dict(
                           JDBC_COLTYPE_ARRAY=>Array,
@@ -85,8 +84,8 @@ function Data.streamfrom(s::Source, ::Type{Data.Field}, ::Type{Union{T, Missing}
     convert(T, o)::T
 end
 
-DataFrames.DataFrame(s::Source) = Data.close!(Data.stream!(s, DataFrame))
-DataFrames.DataFrame(rs::JResultSet) = DataFrame(Source(rs))
-DataFrames.DataFrame(stmt::JStatement, query::AbstractString) = DataFrame(Source(stmt, query))
-DataFrames.DataFrame(csr::Union{JDBCCursor,JDBCRowIterator}) = DataFrame(Source(csr))
+load(::Type{T}, s::Source) where {T} = Data.close!(Data.stream!(s, T))
+load(::Type{T}, rs::JResultSet) where {T} = load(T, Source(rs))
+load(::Type{T}, stmt::JStatement, query::AbstractString) where {T} = load(T, Source(stmt, query))
+load(::Type{T}, csr::Union{JDBC.Cursor,JDBCRowIterator}) where {T} = load(T, Source(csr))
 

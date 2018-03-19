@@ -5,6 +5,10 @@ using Compat
 using Compat.Dates
 using Compat: Nullable
 
+if VERSION ≤ v"0.7.0-"
+    using Missings
+end
+
 import Compat: IteratorSize, IteratorEltype, start, next, done
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
