@@ -85,8 +85,8 @@ function Data.streamfrom(s::Source, ::Type{Data.Field}, ::Type{Union{T, Missing}
     convert(T, o)::T
 end
 
-DataFrames.readtable(s::Source) = Data.close!(Data.stream!(s, DataFrame))
-DataFrames.readtable(rs::JResultSet) = readtable(Source(rs))
-DataFrames.readtable(stmt::JStatement, query::AbstractString) = readtable(Source(stmt, query))
-DataFrames.readtable(csr::Union{JDBCCursor,JDBCRowIterator}) = readtable(Source(csr))
+DataFrames.DataFrame(s::Source) = Data.close!(Data.stream!(s, DataFrame))
+DataFrames.DataFrame(rs::JResultSet) = DataFrame(Source(rs))
+DataFrames.DataFrame(stmt::JStatement, query::AbstractString) = DataFrame(Source(stmt, query))
+DataFrames.DataFrame(csr::Union{JDBCCursor,JDBCRowIterator}) = DataFrame(Source(csr))
 

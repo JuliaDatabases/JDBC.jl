@@ -13,7 +13,7 @@ stmt = createStatement(conn)
 rs = executeQuery(stmt, "select * from airlines")
 
 @testset "Query1" begin
-    airlines = readtable(rs)
+    airlines = DataFrame(rs)
     @test size(airlines) == (2,9)
     @test airlines[1, :BASIC_RATE] == 0.18
     @test airlines[2, :BASIC_RATE] == 0.19
@@ -48,7 +48,7 @@ airlines = collect(iter)
 end
 
 rs = executeQuery(stmt, "select * from flights")
-flights = readtable(rs)
+flights = DataFrame(rs)
 
 # TODO think these datetimes get screwed up because of time zones
 # not sure if this is even something that can actually get "fixed"
@@ -99,7 +99,7 @@ setInt(ppstmt, 1,20)
 setString(ppstmt, 2,"TWENTY")
 executeUpdate(ppstmt)
 rs=executeQuery(stmt, "select * from FIRSTTABLE")
-ft = readtable(rs)
+ft = DataFrame(rs)
 
 @testset "Query3" begin
     @test size(ft) == (2,2)
