@@ -38,7 +38,7 @@ function Source(csr::Cursor)
     if csr.rs == nothing
         throw(ArgumentError("A cursor must contain a valid JResultSet to construct a Source."))
     else
-        Source(get(csr.rs))
+        Source(csr.rs)
     end
 end
 
