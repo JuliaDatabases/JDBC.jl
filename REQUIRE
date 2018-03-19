@@ -1,5 +1,4 @@
 julia 0.6
 JavaCall 0.5.0
-Requires
-Compat 0.17
-DBAPI
+DataStreams
+Compat 0.60.0

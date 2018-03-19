@@ -5,18 +5,10 @@
 
 This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
 
-The API provided by this package is very similar to the native JDBC API, with the necessary changes to move from Java's object-oriented syntax to a Julia's more *functional* syntax. So while a Java method is transformed to a Julia function
-with the same name, the receiver in Java (the object before the dot) becomes the first argument to the Julia function. For
-example, `statement.executeQuery(sql_string)` in Java becomes, in Julia: `executeQuery(statement, sql_string)`. 
-Therefore, some familiarity with JDBC is useful for working with this package. 
+The API provided by this package consists essentially of two components: a "direct" (i.e. minimally wrapped) interface directly to Java JDBC and a minimal
+Julian interface with support for [DataStreams.jl](https://github.com/JuliaData/DataStreams.jl).
 
-In JDBC, accessing the data frome a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
-
-There is however, an optional `readtable` method that is defined when `[DataFrames](https://github.com/JuliaStats/DataFrames.jl)` is loaded. This converts a JDBC resultset into a DataFrame. 
-
-This package is now `julia v0.4` and later only. The last released version of this package that works with `julia v0.3` is `v0.0.3`.
-
-
+This package currently supports only Julia v0.6 and later.
 
 
 ### Initialisation
@@ -25,22 +17,25 @@ To start it up, add the database driver jar file to the classpath, and then init
 
 ```julia
 using JDBC
-JavaCall.addClassPath("/home/me/derby/derby.jar")
+JDBC.usedriver("/home/me/derby/derby.jar")
 JDBC.init() # or JavaCall.init()
  ```
-### Basic Usage
 
-As described above, using this package is very similar to using a JDBC driver in Java. Write the Julia code in a way that is very similar to how corresponding Java code would look. 
+### Low-Level Java Interface
+
+As described above, this package provides functionality very similar to using a JDBC driver in Java. This allows you to write code very similar to how it would
+look in Java.
 
 ```julia
 conn = DriverManager.getConnection("jdbc:derby:test/juliatest")
 stmt = createStatement(conn)
 rs = executeQuery(stmt, "select * from firsttable")
- for r in rs
-      println(getInt(r, 1),  getString(r,"NAME"))
- end
+for r in rs
+     println(getInt(r, 1),  getString(r,"NAME"))
+end
 ```
 
+In JDBC, accessing the data frome a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
 To get each row as a Julia tuple, iterate over the result set using `JDBCRowIterator`.  Values in the tuple will be of Nullable type if they are declared to be nullable in the database.
 
 ```julia
@@ -63,7 +58,7 @@ getBoolean
 getNString
 getURL
 ```
-### Updates
+#### Updates (Java Interface)
 
 While inserts and updates can be done via a fully specified SQL string using the `Statement` instance above, it is much safer to do so via a `PreparedStatement`. A `PreparedStatement` has setter functions defined for different types, corresponding to the getter functions shown above. 
 
@@ -88,7 +83,7 @@ Also note that for a `Statement`, the query itself is specified in the correspon
 
 The connections and the statements should be closed via their `close(...)` functions. `commit(connection)`, `rollback(connection)` and `setAutoCommit(true|false)` do the obvious things.
 
-### Metadata
+#### Metadata (Java Interface)
 
 Pass the `JResultSet` object from `executeQuery` to `getTableMetaData` to get an array of `(column_name, column_type)` tuples.
 
@@ -99,43 +94,61 @@ rs = executeQuery(stmt, "select * from firsttable")
 metadata = getTableMetaData(rs)
 ```
 
-### DBAPI.jl Interface
+### Julian Interface
 
-[DBAPI.jl](https://github.com/JuliaDB/DBAPI.jl) is implemented in this package.  To connect:
-
+This package also provides a more Julian interface for interacting with JDBC.  This involves creating `JDBC.Connection` and `JDBC.Cursor` objects to which query
+strings can be passed
 ```julia
-conn = connect(JDBCInterface, "jdbc:mysql://127.0.0.1/",
-               props=Dict("user" => "root", "passwd" => ""),
-               connectorpath="/usr/share/java/mysql-connector-java.jar")
-```
+cnxn = JDBC.Connection("jdbc:derby:test/juliatest") # create connection
+csr = cusror(cnxn) # create cursor from connection
 
-To disconnect:
+# if you don't need access to the connection you can create the cursor directly
+csr = cursor("jdbc:derby:test/juliatest")
 
-```julia
-close(conn)
-```
-
-To execute a query, we first need a cursor, then we run `execute!` on the cursor:
-
-```julia
-csr = cursor(conn)
+# execute some SQL
 execute!(csr, "insert into pi_table (pi_value) values (3.14);")
 execute!(csr, "select * from my_table;")
-```
 
-To iterate over rows call `rows` on the cursor:
-
-```julia
-rs = rows(csr)
-for row in rs
+# to iterate over rows
+for row ∈ rows(csr)
     # do stuff with row
 end
+
+close(csr)  # closes Connection, can be called on Connection or Cursor
 ```
 
-To close the cursor call `close` on the cursor instance.
+#### `DataStreams` Interface and Creating `DataFrame`s
+
+JDBC includes a [DataStreams](https://github.com/JuliaData/DataStreams.jl) interface.  A DataStreams `Source` object can be created from a `JDBC.Cursor` or a
+`JDBCRowIterator` simply by doing e.g. `JDBC.Source(csr)`.  This object implements the DataStreams `Data.Source` interface.  It can be useful for retrieving metadata
+with `Data.schema`.
+
+This is also useful for loading data from a database into an object that implements the DataStreams `Data.Sink` interface such as a `DataFrame`.  For this we
+provide also the convenient `JDBC.load` function.
+
+For example, you can do
+```julia
+src = JDBC.Source(csr)  # create a Source from a JDBC.Cursor
+# here we load into a DataFrame, but can be any Data.Sink
+df = JDBC.load(DataFrame, src)
+
+# you can also load from the cursor directly
+df = JDBC.load(DataFrame, csr)
+```
+Note that in the above we are assuming that a query was already executed.
+
+### Absolute Quickest Way to Get DataBase Data into `DataFrame`
+
+```julia
+cnxn_str = "jdbc:derby:test/juliatest"  # for example
+df = JDBC.load(DataFrame, cursor(cnxn_str), "select * from sometable")
+```
+Note again that this works not only for `DataFrame` but any `Data.Sink`.
+
+There are a few more `JDBC.load` methods we haven't listed here, see `methods(JDBC.load)`.
 
 ### Caveats
  * BLOB's are not yet supported. 
  * While a large part of the JDBC API has been wrapped, not everything is. Please file an issue if you find anything missing that you need. However, it is very easy to call the Java method directly using `JavaCall`. Please look at the `JDBC.jl` source for inspiration if you need to do that. 
  * Both Julia `DateTime` and Java `java.sql.Date` do not store any timezone information within them. I believe we are doing the right thing here, and everything should be consistent. However timezone is easy to get wrong, so please double check if your application depends on accurate times. 
- * There are many many different JDBC drivers in Java. This package needs testing with a wide variety of those. 
+ * There are many many different JDBC drivers in Java. This package needs testing with a wide variety of those.

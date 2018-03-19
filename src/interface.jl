@@ -1,38 +1,37 @@
-using JavaCall
 
-abstract type JDBCInterface<:DatabaseInterface; end
+mutable struct Connection
+    conn::Union{JConnection,Nothing}
 
-type JDBCConnection <: DatabaseConnection{JDBCInterface}
-    conn::Nullable{JConnection}
-    function JDBCConnection(conn::JConnection)
-        new(Nullable(conn))
-    end
+    Connection(conn::JConnection) = new(conn)
 end
 
-type JDBCError <: DatabaseError{JDBCInterface}
+
+struct JDBCError <: Exception
     msg::AbstractString
 end
 
-function Base.showerror(io::IO, e::JDBCError)
-    print(io, JDBCError, ": " * e.msg)
+Base.showerror(io::IO, e::JDBCError) = print(io, JDBCError, ": " * e.msg)
+
+
+mutable struct Cursor
+    conn::Connection
+    stmt::Union{JStatement, Nothing}
+    rs::Union{JResultSet, Nothing}
+
+    Cursor(conn::Connection, stmt::JStatement) = new(conn, stmt, nothing)
 end
 
-type JDBCCursor <: DatabaseCursor{JDBCInterface}
-    conn::JDBCConnection
-    stmt::Nullable{JStatement}
-    rs::Nullable{JResultSet}
-    function JDBCCursor(conn, stmt::JStatement)
-        new(conn, Nullable(stmt), Nullable{JResultSet}())
-    end
-end
-
-function JDBCCursor(conn)
+function Cursor(conn::Connection)
     isopen(conn) || throw(JDBCError("Attempting to create cursor with a null connection"))
-    stmt = createStatement(conn.conn.value)
-    JDBCCursor(conn, stmt)
+    Cursor(conn, createstatement(conn))
 end
 
-export JDBCInterface, JDBCError, JDBCConnection, JDBCCursor
+
+# TODO these mainly for compatibility
+const JDBCCursor = Cursor
+const JDBCConnection = Connection
+export JDBCError, JDBCConnection, JDBCCursor
+
 
 """
 Open a JDBC Connection to the specified `host`.  The username and password can be optionally passed
@@ -42,29 +41,30 @@ Open a JDBC Connection to the specified `host`.  The username and password can b
 
 Returns a `JDBCConnection` instance.
 """
-function connect(::Type{JDBCInterface}, host; props=Dict{}, connectorpath="")
+function Connection(host::AbstractString; props=Dict(), connectorpath="")
     if !JavaCall.isloaded()
-        connectorpath != "" && JavaCall.addClassPath(connectorpath)
+        !isempty(connectorpath) && JavaCall.addClassPath(connectorpath)
         JDBC.init()
     end
-    if props != Dict{}
-        conn = DriverManager.getConnection(host, props)
+    conn = if !isempty(props)
+        DriverManager.getConnection(host, props)
     else
-        conn = DriverManager.getConnection(host)
+        DriverManager.getConnection(host)
     end
-    return JDBCConnection(conn)
+    Connection(conn)
 end
+
+createstatement(conn::Connection) = createStatement(conn.conn)
 
 """
 Closes the JDBCConnection `conn`.  Throws a `JDBCError` if connection is null.
 
 Returns `nothing`.
 """
-function close(conn::JDBCConnection)
+function Base.close(conn::Connection)
     isopen(conn) || throw(JDBCError("Cannot close null connection."))
-    close(conn.conn.value)
-    conn.conn = Nullable{JConnection}()
-    return nothing
+    close(conn.conn)
+    conn.conn = nothing
 end
 
 """
@@ -72,28 +72,30 @@ Close the JDBCCursor `csr`.  Throws a `JDBCError` if cursor is not initialized.
 
 Returns `nothing`.
 """
-function close(csr::JDBCCursor)
-    isnull(csr.stmt) && throw(JDBCError("Cannot close uninitialized cursor."))
-    isnull(csr.rs) || begin; close(csr.rs.value); csr.rs = Nullable{JResultSet}(); end
-    close(csr.stmt.value)
-    csr.stmt = Nullable{JStatement}()
-    return nothing
+function Base.close(csr::Cursor)
+    csr.stmt == nothing && throw(JDBCError("Cannot close uninitialized cursor."))
+    if csr.rs == nothing
+        close(csr.rs)
+        csr.rs = nothing
+    end
+    close(csr.stmt)
+    csr.stmt = nothing
 end
 
 """
 Returns a boolean indicating whether connection `conn` is open.
 """
-isopen(conn::JDBCConnection) = !isnull(conn.conn)
+isopen(conn::Connection) = (conn.conn ≠ nothing)
 
 """
 Commit any pending transaction to the database.  Throws a `JDBCError` if connection is null.
 
 Returns `nothing`.
 """
-function commit(conn::JDBCConnection)
+function commit(conn::Connection)
     isopen(conn) || throw(JDBCError("Commit called on null connection."))
-    commit(conn.conn.value)
-    return nothing
+    commit(conn.conn)
+    nothing
 end
 
 """
@@ -101,10 +103,10 @@ Roll back to the start of any pending transaction.  Throws a `JDBCError` if conn
 
 Returns `nothing`.
 """
-function rollback(conn::JDBCConnection)
+function rollback(conn::Connection)
     isopen(conn) || throw(JDBCError("Rollback called on null connection."))
-    rollback(conn.conn.value)
-    return nothing
+    rollback(conn.conn)
+    nothing
 end
 
 """
@@ -112,12 +114,15 @@ Create a new database cursor.
 
 Returns a `JDBCCursor` instance.
 """
-cursor(conn::JDBCConnection) = JDBCCursor(conn)
+cursor(conn::Connection) = Cursor(conn)
+function cursor(host::AbstractString; props=Dict(), connectorpath="")
+    cursor(Connection(host, props=props, connectorpath=connectorpath))
+end
 
 """
 Return the corresponding connection for a given cursor.
 """
-connection(csr::JDBCCursor) = csr.conn
+connection(csr::Cursor) = csr.conn
 
 """
 Run a query on a database.
@@ -133,21 +138,21 @@ Throws a `JDBCError` if query caused an error, cursor is not initialized or
 
 Returns `nothing`.
 """
-function execute!(csr::JDBCCursor, qry::SimpleStringQuery)
+function execute!(csr::Cursor, qry::AbstractString)
     isopen(connection(csr)) || throw(JDBCError("Cannot execute with null connection."))
-    isnull(csr.stmt) && throw(JDBCError("Execute called on uninitialized cursor."))
-    exectype = execute(csr.stmt.value, qry.query)
+    csr.stmt == nothing && throw(JDBCError("Execute called on uninitialized cursor."))
+    exectype = execute(csr.stmt, qry)
     try
         JavaCall.geterror()
     catch err
         throw(JDBCError(err.msg))
     end
     if exectype == 1  # if this is a statement that returned a result set.
-        csr.rs = getResultSet(csr.stmt.value)
+        csr.rs = getResultSet(csr.stmt)
     else
-        csr.rs = Nullable{JResultSet}()
+        csr.rs = nothing
     end
-    return nothing
+    nothing
 end
 
 """
@@ -160,11 +165,14 @@ Throws a `JDBCError` if `execute!` was not called on the cursor or connection is
 
 Returns a `JDBCRowIterator` instance.
 """
-function rows(csr::JDBCCursor)
+function rows(csr::Cursor)
     isopen(connection(csr)) || throw(JDBCError("Cannot create iterator with null connection."))
-    isnull(csr.rs) && throw(JDBCError("Cannot create iterator with null result set.  Please call execute! on the cursor first."))
-    return JDBCRowIterator(csr.rs.value)
+    if csr.rs == nothing
+        throw(JDBCError(string("Cannot create iterator with null result set.  ",
+                               "Please call execute! on the cursor first.")))
+    end
+    return JDBCRowIterator(csr.rs)
 end
 
-export connect, close, isopen, commit, rollback, cursor,
+export connect, isopen, commit, rollback, cursor,
        connection, execute!, rows

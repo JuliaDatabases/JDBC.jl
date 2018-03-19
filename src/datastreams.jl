@@ -1,5 +1,4 @@
 using DataStreams
-using DataFrames
 
 const column_types = Dict(
                           JDBC_COLTYPE_ARRAY=>Array,
@@ -27,6 +26,9 @@ const column_types = Dict(
                          )
 
 
+usedriver(str::AbstractString) = JavaCall.addClassPath(str)
+
+
 struct Source
     rs::JResultSet
     md::JResultSetMetaData
@@ -34,11 +36,11 @@ end
 Source(rs::JResultSet) = Source(rs, getMetaData(rs))
 Source(stmt::JStatement, query::AbstractString) = Source(executeQuery(stmt, query))
 Source(rowit::JDBCRowIterator) = Source(rowit.rs)
-function Source(csr::JDBCCursor)
-    if isnull(csr.rs)
+function Source(csr::Cursor)
+    if csr.rs == nothing
         throw(ArgumentError("A cursor must contain a valid JResultSet to construct a Source."))
     else
-        Source(get(csr.rs))
+        Source(csr.rs)
     end
 end
 
@@ -85,8 +87,12 @@ function Data.streamfrom(s::Source, ::Type{Data.Field}, ::Type{Union{T, Missing}
     convert(T, o)::T
 end
 
-DataFrames.readtable(s::Source) = Data.close!(Data.stream!(s, DataFrame))
-DataFrames.readtable(rs::JResultSet) = readtable(Source(rs))
-DataFrames.readtable(stmt::JStatement, query::AbstractString) = readtable(Source(stmt, query))
-DataFrames.readtable(csr::Union{JDBCCursor,JDBCRowIterator}) = readtable(Source(csr))
+load(::Type{T}, s::Source) where {T} = Data.close!(Data.stream!(s, T))
+load(::Type{T}, rs::JResultSet) where {T} = load(T, Source(rs))
+load(::Type{T}, stmt::JStatement, query::AbstractString) where {T} = load(T, Source(stmt, query))
+load(::Type{T}, csr::Union{JDBC.Cursor,JDBCRowIterator}) where {T} = load(T, Source(csr))
+function load(::Type{T}, csr::Cursor, q::AbstractString) where T
+    execute!(csr, q)
+    load(T, csr)
+end
 
