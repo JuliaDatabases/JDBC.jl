@@ -115,6 +115,9 @@ Create a new database cursor.
 Returns a `JDBCCursor` instance.
 """
 cursor(conn::Connection) = Cursor(conn)
+function cursor(host::AbstractString; props=Dict(), connectorpath="")
+    cursor(Connection(host, props=props, connectorpath=connectorpath))
+end
 
 """
 Return the corresponding connection for a given cursor.
@@ -171,5 +174,5 @@ function rows(csr::Cursor)
     return JDBCRowIterator(csr.rs)
 end
 
-export connect, close, isopen, commit, rollback, cursor,
+export connect, isopen, commit, rollback, cursor,
        connection, execute!, rows

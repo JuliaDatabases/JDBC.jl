@@ -26,6 +26,9 @@ const column_types = Dict(
                          )
 
 
+usedriver(str::AbstractString) = JavaCall.addClassPath(str)
+
+
 struct Source
     rs::JResultSet
     md::JResultSetMetaData
@@ -88,4 +91,8 @@ load(::Type{T}, s::Source) where {T} = Data.close!(Data.stream!(s, T))
 load(::Type{T}, rs::JResultSet) where {T} = load(T, Source(rs))
 load(::Type{T}, stmt::JStatement, query::AbstractString) where {T} = load(T, Source(stmt, query))
 load(::Type{T}, csr::Union{JDBC.Cursor,JDBCRowIterator}) where {T} = load(T, Source(csr))
+function load(::Type{T}, csr::Cursor, q::AbstractString) where T
+    execute!(csr, q)
+    load(T, csr)
+end
 

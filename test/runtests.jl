@@ -6,8 +6,8 @@ using DataStreams
 using Compat, Compat.Dates, Compat.Test
 using Compat: @info
 
-JavaCall.addClassPath(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
-JavaCall.init()
+JDBC.usedriver(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
+JDBC.init()
 
 conn = DriverManager.getConnection("jdbc:derby:jar:(toursdb.jar)toursdb")
 stmt = createStatement(conn)
@@ -138,6 +138,16 @@ airlines = collect(rows(csr))
 end
 
 close(csr)
+
+@testset "JuliaInterface" begin
+    airlines = JDBC.load(DataFrame, cursor(dbconn), "select * from airlines")
+    @test size(airlines) == (2,9)
+    @test airlines[1, 3] == 0.18
+    @test airlines[2, 3] == 0.19
+    @test airlines[1, 7] == 20
+    @test airlines[1, 1] == "AA"
+end
+
 close(dbconn)
 
 @info("The following Java exception is expected if test pases:")
