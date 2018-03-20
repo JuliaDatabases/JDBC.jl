@@ -11,7 +11,7 @@ Julian interface with support for [DataStreams.jl](https://github.com/JuliaData/
 This package currently supports only Julia v0.6 and later.
 
 
-### Initialisation
+### Initialisation and Destruction
 
 To start it up, add the database driver jar file to the classpath, and then initialise the JVM. 
 
@@ -20,6 +20,10 @@ using JDBC
 JDBC.usedriver("/home/me/derby/derby.jar")
 JDBC.init() # or JavaCall.init()
  ```
+The JVM remains in memory unless you explicitly destroy it.  This can be done with
+```julia
+JDBC.destroy() # or JavaCall.destroy()
+```
 
 ### Low-Level Java Interface
 

@@ -45,8 +45,8 @@ const COLUMN_NO_NULLS = 0
 const COLUMN_NULLABLE = 1
 const COLUMN_NULLABLE_UNKNOWN = 2
 
-# TODO can we put this in init?
 init() = JavaCall.init()
+destroy() = JavaCall.destroy()
 
 """
 ```

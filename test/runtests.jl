@@ -155,4 +155,4 @@ close(dbconn)
 
 rm("tmptest", recursive=true)
 
-JavaCall.destroy()
+JDBC.destroy()
