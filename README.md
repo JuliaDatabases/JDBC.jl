@@ -104,7 +104,7 @@ This package also provides a more Julian interface for interacting with JDBC.  T
 strings can be passed
 ```julia
 cnxn = JDBC.Connection("jdbc:derby:test/juliatest") # create connection
-csr = cusror(cnxn) # create cursor from connection
+csr = cursor(cnxn) # create cursor from connection
 
 # if you don't need access to the connection you can create the cursor directly
 csr = cursor("jdbc:derby:test/juliatest")
