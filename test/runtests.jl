@@ -151,7 +151,7 @@ end
 close(dbconn)
 
 @info("The following Java exception is expected if test pases:")
-@test_throws ErrorException DriverManager.getConnection("jdbc:derby:;shutdown=true")
+@test_throws Exception DriverManager.getConnection("jdbc:derby:;shutdown=true")
 
 rm("tmptest", recursive=true)
 
