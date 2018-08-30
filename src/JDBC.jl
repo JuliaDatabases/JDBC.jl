@@ -3,13 +3,16 @@ module JDBC
 using JavaCall
 using Compat
 using Compat.Dates
-using Compat: Nullable
 
 if VERSION ≤ v"0.7.0-"
     using Missings
 end
 
-import Compat: IteratorSize, IteratorEltype, start, next, done
+import Compat: IteratorSize, IteratorEltype
+
+if VERSION < v"1.0-"
+    import Base: start, next, done
+end
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,

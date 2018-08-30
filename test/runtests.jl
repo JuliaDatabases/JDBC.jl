@@ -5,8 +5,13 @@ using DataFrames
 using DataStreams
 using Compat, Compat.Dates, Compat.Test
 using Compat: @info
+import Pkg
 
-JDBC.usedriver(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
+if VERSION < v"0.7-"
+    JDBC.usedriver(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
+else
+    JDBC.usedriver(joinpath(dirname(pathof(JDBC)),"..","test","derby.jar"))
+end
 JDBC.init()
 
 conn = DriverManager.getConnection("jdbc:derby:jar:(toursdb.jar)toursdb")
