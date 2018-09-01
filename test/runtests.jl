@@ -7,11 +7,10 @@ using Compat, Compat.Dates, Compat.Test
 using Compat: @info
 import Pkg
 
-if VERSION < v"0.7-"
-    JDBC.usedriver(joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
-else
-    JDBC.usedriver(joinpath(dirname(pathof(JDBC)),"..","test","derby.jar"))
-end
+derby_driver_path = joinpath(dirname(pathof(JDBC)),"..","test","derby.jar")
+
+JDBC.usedriver(derby_driver_path)
+
 JDBC.init()
 
 conn = DriverManager.getConnection("jdbc:derby:jar:(toursdb.jar)toursdb")
@@ -128,10 +127,11 @@ close(cstmt)
 
 # test DBAPI functions
 dbconn = JDBC.Connection("jdbc:derby:jar:(toursdb.jar)toursdb",
-                         connectorpath=joinpath(Pkg.dir("JDBC"), "test", "derby.jar"))
+                         connectorpath=derby_driver_path)
+
 csr = cursor(dbconn)
 execute!(csr, "select * from airlines")
-airlines = collect(rows(csr))
+global airlines = collect(rows(csr))
 
 @testset "Query4" begin
     @test size(airlines) == (2,)
@@ -145,7 +145,7 @@ end
 close(csr)
 
 @testset "JuliaInterface" begin
-    airlines = JDBC.load(DataFrame, cursor(dbconn), "select * from airlines")
+    global airlines = JDBC.load(DataFrame, cursor(dbconn), "select * from airlines")
     @test size(airlines) == (2,9)
     @test airlines[1, 3] == 0.18
     @test airlines[2, 3] == 0.19
