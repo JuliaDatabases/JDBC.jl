@@ -1,18 +1,7 @@
 #This file is part of JDBC.jl. License is MIT.
 module JDBC
 using JavaCall
-using Compat
-using Compat.Dates
-
-if VERSION ≤ v"0.7.0-"
-    using Missings
-end
-
-import Compat: IteratorSize, IteratorEltype
-
-if VERSION < v"1.0-"
-    import Base: start, next, done
-end
+using Dates
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,
@@ -281,10 +270,9 @@ getResultSet(stmt::JStatement) = jcall(stmt, "getResultSet", JResultSet, ())
 
 isdone(rs::JResultSet) = jcall(rs, "next", jboolean, ()) == 0
 
-start(rs::JResultSet) = true
-next(rs::JResultSet, state) = rs, state
-done(rs::JResultSet, state) = isdone(rs)
+Base.iterate(rs::JResultSet, state=1) = isdone(rs) ? nothing : (rs, state)
 
+Base.IteratorSize(::JResultSet) = Base.SizeUnknown()
 
 for s in [("String", :JString),
           ("NString", :JString),
@@ -623,10 +611,10 @@ mutable struct JDBCRowIterator
     end
 end
 
-start(iter::JDBCRowIterator) = true
-function next(iter::JDBCRowIterator, state)
+function Base.iterate(iter::JDBCRowIterator, state=1)
+    isdone(iter.rs) && (return nothing)
     row = Array{Any}(undef, iter.ncols)
-    for c in 1:iter.ncols
+    for c ∈ 1:iter.ncols
         val = iter.get_methods[c](iter.rs, c)
         if wasNull(iter.rs)
             row[c] = missing
@@ -636,13 +624,11 @@ function next(iter::JDBCRowIterator, state)
             row[c] = val
         end
     end
-
     tuple(row...), state
 end
-done(iter::JDBCRowIterator, state) = done(iter.rs, state)
 
-IteratorSize(::JDBCRowIterator) = Base.SizeUnknown()
-IteratorEltype(::JDBCRowIterator) = Base.EltypeUnknown()
+Base.IteratorSize(::JDBCRowIterator) = Base.SizeUnknown()
+Base.IteratorEltype(::JDBCRowIterator) = Base.EltypeUnknown()
 
 export getTableMetaData, JDBCRowIterator
 
