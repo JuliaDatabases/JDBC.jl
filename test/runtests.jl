@@ -3,8 +3,8 @@ using JavaCall
 using JDBC
 using DataFrames
 using DataStreams
-using Compat, Compat.Dates, Compat.Test
-using Compat: @info
+using Test
+using Dates
 import Pkg
 
 derby_driver_path = joinpath(dirname(pathof(JDBC)),"..","test","derby.jar")
