@@ -486,6 +486,9 @@ The column name
 """
 getColumnName(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnName", JString, (jint,), col)
 
+getColumnPrecision(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnPrecision", jint, (jint,), col)
+getColumnScale(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "getColumnScale", jint, (jint,), col)
+
 
 isNullable(rsmd::JResultSetMetaData, col::Integer) = jcall(rsmd, "isNullable", jint, (jint,), col)
 
@@ -557,12 +560,12 @@ global const get_method_dict = Dict(
         JDBC_COLTYPE_NCHAR => getNString,
         # JDBC_COLTYPE_NCLOB => 2011,
         # JDBC_COLTYPE_NULL => 0,
-        JDBC_COLTYPE_NUMERIC => getFloat,
+        JDBC_COLTYPE_NUMERIC => getDouble,
         JDBC_COLTYPE_NVARCHAR => getNString,
         # JDBC_COLTYPE_OTHER => 1111,
         JDBC_COLTYPE_REAL => getFloat,
         # JDBC_COLTYPE_REF => 2006,
-        JDBC_COLTYPE_ROWID => getInt,
+        JDBC_COLTYPE_ROWID => getLong,
         JDBC_COLTYPE_SMALLINT => getShort,
         # JDBC_COLTYPE_SQLXML => 2009,
         # JDBC_COLTYPE_STRUCT => 2002,
