@@ -1,5 +1,6 @@
 name = "JDBC"
 uuid = "6042db11-3c3d-5e84-8dba-9cbf74c9ba48"
+version = "0.4.1"
 
 [deps]
 DataStreams = "9a8bc11e-79be-5b39-94d7-1ccc349a1a85"
