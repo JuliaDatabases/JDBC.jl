@@ -37,7 +37,19 @@ const COLUMN_NO_NULLS = 0
 const COLUMN_NULLABLE = 1
 const COLUMN_NULLABLE_UNKNOWN = 2
 
-init() = JavaCall.init()
+function init()
+    if haskey(ENV, "JAVACALL_IGNORE_WORKERS")
+        v = ENV["JAVACALL_IGNORE_WORKERS"]
+        if myid() in map(x->parse(Int, x), split(v, ","))
+            warn("Not initializing JavaCall")
+            return
+        end
+    end
+    if haskey(ENV, "JAVACALL_MEMORY_LIMIT")
+        JavaCall.addOpts("-Xmx$(ENV["JAVACALL_MEMORY_LIMIT"])")
+    end
+    JavaCall.init()
+end
 destroy() = JavaCall.destroy()
 
 """
