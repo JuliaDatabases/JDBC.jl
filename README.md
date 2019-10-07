@@ -6,7 +6,7 @@
 This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
 
 The API provided by this package consists essentially of two components: a "direct" (i.e. minimally wrapped) interface directly to Java JDBC and a minimal
-Julian interface with support for [DataStreams.jl](https://github.com/JuliaData/DataStreams.jl).
+Julian interface with support for [Tables.jl](https://github.com/JuliaData/Tables.jl).
 
 This package currently supports only Julia v0.6 and later.
 
@@ -121,13 +121,13 @@ end
 close(csr)  # closes Connection, can be called on Connection or Cursor
 ```
 
-#### `DataStreams` Interface and Creating `DataFrame`s
+#### `Tables` Interface and Creating `DataFrame`s
 
-JDBC includes a [DataStreams](https://github.com/JuliaData/DataStreams.jl) interface.  A DataStreams `Source` object can be created from a `JDBC.Cursor` or a
-`JDBCRowIterator` simply by doing e.g. `JDBC.Source(csr)`.  This object implements the DataStreams `Data.Source` interface.  It can be useful for retrieving metadata
-with `Data.schema`.
+JDBC includes a [Tables](https://github.com/JuliaData/Tables.jl) interface.  A Tables
+`Source` object can be created from a `JDBC.Cursor` or a `JDBCRowIterator` simply by doing
+e.g. `JDBC.Source(csr)`.  It can be useful for retrieving metadata with `Tables.schema`.
 
-This is also useful for loading data from a database into an object that implements the DataStreams `Data.Sink` interface such as a `DataFrame`.  For this we
+This is also useful for loading data from a database into another object that implements the Tables interface.  For this we
 provide also the convenient `JDBC.load` function.
 
 For example, you can do
