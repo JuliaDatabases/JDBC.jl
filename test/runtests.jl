@@ -2,7 +2,6 @@
 using JavaCall
 using JDBC
 using DataFrames
-using DataStreams
 using Test
 using Dates
 import Pkg
