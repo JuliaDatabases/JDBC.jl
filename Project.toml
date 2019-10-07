@@ -1,6 +1,6 @@
 name = "JDBC"
 uuid = "6042db11-3c3d-5e84-8dba-9cbf74c9ba48"
-version = "0.5.0"
+version = "0.4.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
