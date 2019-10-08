@@ -1,12 +1,28 @@
+
+sudo: required
+
 language: julia
+
+services:
+  - docker
+
 os:
+  - osx
   - linux
+
 julia:
-    - 0.7
-    - 1.0
+  - 1.0
+  - 1.3
+  - nightly
+
+matrix:
+  allow_failures:
+  - julia: nightly
+
 notifications:
   email: false
-# uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("JDBC"); Pkg.test("JDBC"; coverage=true)'
+
+after_success:
+  - julia -e 'import Pkg, JDBC; cd(joinpath(dirname(pathof(JDBC)),"..")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - julia -e 'import Pkg; Pkg.add("Documenter")'
+  - julia -e 'import JDBC; cd(joinpath(dirname(pathof(JDBC)),"..")); include(joinpath("docs", "make.jl"))'

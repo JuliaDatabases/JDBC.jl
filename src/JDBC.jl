@@ -640,7 +640,7 @@ export getTableMetaData, JDBCRowIterator
 
 
 include("interface.jl")
-include("datastreams.jl")
+include("tables.jl")
 
 
 end # module

@@ -1,4 +1,4 @@
-using DataStreams
+using Tables
 
 const column_types = Dict(
                           JDBC_COLTYPE_ARRAY=>Array,
@@ -57,41 +57,34 @@ colname(s::Source, col::Int) = getColumnName(s.md, col)
 ncols(s::Source) = getColumnCount(s.md)
 
 coltypes(s::Source) = Type[coltype(s, i) for i ∈ 1:ncols(s)]
-colnames(s::Source) = String[colname(s, i) for i ∈ 1:ncols(s)]
+colnames(s::Source) = Symbol[Symbol(colname(s, i)) for i ∈ 1:ncols(s)]
 
-# WARNING: this does not seem to actually work
-Data.reset!(s::Source) = beforeFirst!(s.rs)
+Tables.istable(::Type{<:Source}) = true
+Tables.rowaccess(::Type{<:Source}) = true
+Tables.rows(s::Source) = s
+Tables.schema(s::Source) = Tables.Schema(colnames(s), coltypes(s))
 
-Data.isdone(s::Source, row::Int, col::Int)  = isdone(s.rs)
-
-Data.schema(s::Source) = Data.Schema(coltypes(s), colnames(s), missing)
-
-Data.accesspattern(s::Source) = Data.Sequential
-
-Data.streamtype(::Type{Source}, ::Type{Data.Field}) = true
-Data.streamtype(::Type{Source}, ::Type{Data.Column}) = false
+Base.IteratorSize(::Type{<:Source}) = Base.SizeUnknown()
+Base.eltype(s::Source) = namedtupletype(Tables.schema(s))
+namedtupletype(::Tables.Schema{names, types}) where {names, types} = NamedTuple{names, types}
+namedtupletype(s::Source) = namedtupletype(Tables.schema(s))
 
 # TODO currently jdbc_get_method is very inefficient
 pullfield(s::Source, col::Int) = jdbc_get_method(getColumnType(s.md, col))(s.rs, col)
 
-# does not store current row number as a persistent state
-function Data.streamfrom(s::Source, ::Type{Data.Field}, ::Type{T}, row::Int, col::Int) where T
-    convert(T, pullfield(s, col))::T
-end
-function Data.streamfrom(s::Source, ::Type{Data.Field}, ::Type{Union{T, Missing}},
-                         row::Int, col::Int) where T
-    o = pullfield(s, col)
-    if wasNull(s.rs)
-        return missing
-    end
-    convert(T, o)::T
+jdbcconvert(::Type{T}, s, x) where {T} = convert(T, x)
+jdbcconvert(::Type{Union{T, Missing}}, s, x) where {T} = wasNull(s.rs) ? missing : convert(T, x)
+
+function Base.iterate(s::Source, NT::Type{NamedTuple{names, types}}=namedtupletype(s)) where {names, types}
+    isdone(s.rs) && return nothing
+    NT(jdbcconvert(fieldtype(types, i), s, pullfield(s, i)) for i ∈ 1:fieldcount(types)), NT
 end
 
-load(::Type{T}, s::Source) where {T} = Data.close!(Data.stream!(s, T))
+load(::Type{T}, s::Source) where {T} = T(Tables.materializer(T)(s))
 load(::Type{T}, rs::JResultSet) where {T} = load(T, Source(rs))
 load(::Type{T}, stmt::JStatement, query::AbstractString) where {T} = load(T, Source(stmt, query))
 load(::Type{T}, csr::Union{JDBC.Cursor,JDBCRowIterator}) where {T} = load(T, Source(csr))
-function load(::Type{T}, csr::Cursor, q::AbstractString) where T
+function load(::Type{T}, csr::Cursor, q::AbstractString) where {T}
     execute!(csr, q)
     load(T, csr)
 end
