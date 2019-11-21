@@ -4,6 +4,7 @@ using JDBC
 using DataFrames
 using Test
 using Dates
+using Decimals
 import Pkg
 
 derby_driver_path = joinpath(dirname(pathof(JDBC)),"..","test","derby.jar")
@@ -94,23 +95,28 @@ stmt = createStatement(conn)
 
 executeUpdate(stmt, "CREATE TABLE FIRSTTABLE
                    (ID INT PRIMARY KEY,
-                   NAME VARCHAR(12))")
-ppstmt = prepareStatement(conn, "insert into firsttable values (?, ?)")
+                   NAME VARCHAR(12),
+                   VALUE DECIMAL(5,2))")
+ppstmt = prepareStatement(conn, "insert into firsttable values (?, ?, ?)")
 setInt(ppstmt, 1,10)
 setString(ppstmt, 2,"TEN")
+setBigDecimal(ppstmt, 3, decimal("10.38"))
 executeUpdate(ppstmt)
 setInt(ppstmt, 1,20)
 setString(ppstmt, 2,"TWENTY")
+setBigDecimal(ppstmt, 3, decimal("-1.72e2"))
 executeUpdate(ppstmt)
-rs=executeQuery(stmt, "select * from FIRSTTABLE")
+rs = executeQuery(stmt, "select * from FIRSTTABLE")
 ft = JDBC.load(DataFrame, rs)
 
 @testset "Query3" begin
-    @test size(ft) == (2,2)
+    @test size(ft) == (2,3)
     @test ft[1, :ID] == 10
     @test ft[1, :NAME] == "TEN"
+    @test ft[1, :VALUE] == decimal("10.38")
     @test ft[2, :ID] == 20
     @test ft[2, :NAME] == "TWENTY"
+    @test ft[2, :VALUE] == decimal("-1.72e2")
 end
 
 close(rs)
