@@ -1,6 +1,6 @@
 # JDBC - Julia interface to Java JDBC database drivers
 
-[![Build Status](https://travis-ci.org/JuliaDatabases/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDatabases/JDBC.jl)  [![Build status](https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true)](https://ci.appveyor.com/project/aviks/jdbc-jl)  [![JDBC](http://pkg.julialang.org/badges/JDBC_0.6.svg)](http://pkg.julialang.org/?pkg=JDBC)
+[![Build Status](https://travis-ci.org/JuliaDatabases/JDBC.jl.svg?branch=master)](https://travis-ci.org/JuliaDatabases/JDBC.jl)  [![Build status](https://ci.appveyor.com/api/projects/status/3m0pq27s24mkaduq?svg=true)](https://ci.appveyor.com/project/aviks/jdbc-jl)  
 
 
 This package enables the use of Java JDBC drivers to access databases from within Julia. It uses the [JavaCall.jl](https://github.com/aviks/JavaCall.jl) package to call into Java in order to use the JDBC drivers. 
