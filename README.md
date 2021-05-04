@@ -39,7 +39,7 @@ for r in rs
 end
 ```
 
-In JDBC, accessing the data frome a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
+In JDBC, accessing the data from a SQL call is done by iterating over a `ResultSet` instance. In Julia therefore, the `ResultSet` is a regular Julia iterator, and can be iterated in the usual fashion. 
 To get each row as a Julia tuple, iterate over the result set using `JDBCRowIterator`.  Values in the tuple will be of Nullable type if they are declared to be nullable in the database.
 
 ```julia
