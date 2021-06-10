@@ -1,12 +1,12 @@
 #This file is part of JDBC.jl. License is MIT.
 module JDBC
 using JavaCall
-using Dates
+using Dates, Decimals
 
 export DriverManager, createStatement, prepareStatement, prepareCall, executeQuery, setFetchSize,
         getInt, getFloat, getString, getShort, getByte, getTime, getTimestamp, getDate,
-        getBoolean, getNString, getURL, setInt, setFloat, setString, setShort, setByte, setBoolean,
-        getMetaData, getColumnCount, getColumnType, getColumnName, executeUpdate, execute, commit,
+        getBoolean, getNString, getURL, getBigDecimal, setInt, setFloat, setString, setShort, setByte, setBoolean,
+        setBigDecimal, getMetaData, getColumnCount, getColumnType, getColumnName, executeUpdate, execute, commit,
         rollback, setAutoCommit, getResultSet
 
 
@@ -32,6 +32,7 @@ const JStatement = @jimport java.sql.Statement
 const JPreparedStatement = @jimport java.sql.PreparedStatement
 const JCallableStatement = @jimport java.sql.CallableStatement
 const JConnection = @jimport java.sql.Connection
+const JBigDecimal = @jimport java.math.BigDecimal
 
 const COLUMN_NO_NULLS = 0
 const COLUMN_NULLABLE = 1
@@ -39,6 +40,10 @@ const COLUMN_NULLABLE_UNKNOWN = 2
 
 init() = JavaCall.init()
 destroy() = JavaCall.destroy()
+
+
+JBigDecimal(x::Decimal) = JBigDecimal((JString,), string(x))
+Decimals.Decimal(x::JBigDecimal) = decimal(jcall(x, "toPlainString", JString, ()))
 
 """
 ```
@@ -283,8 +288,7 @@ for s in [("String", :JString),
           ("Float", :jfloat),
           ("Double", :jdouble),
           ("Byte", :jbyte),
-          ("URL", :(@jimport(java.net.URL))),
-          ("BigDecimal", :(@jimport(java.math.BigDecimal)))]
+          ("URL", :(@jimport(java.net.URL)))]
         m = Symbol(string("get", s[1]))
         n = Symbol(string("set", s[1]))
         v = quote
@@ -293,6 +297,25 @@ for s in [("String", :JString),
             $n(stmt::Union{JPreparedStatement, JCallableStatement}, idx::Integer, v ) = jcall(stmt, $(string(n)), Nothing, (jint, $(s[2])), idx, v)
         end
         eval(v)
+end
+
+# this requires a special conversion
+function getBigDecimal_raw(rs::Union{JResultSet, JCallableStatement}, fld::AbstractString)
+    jcall(rs, "getBigDecimal", JBigDecimal, (JString,), fld)
+end
+function getBigDecimal_raw(rs::Union{JResultSet, JCallableStatement}, fld::Integer)
+    jcall(rs, "getBigDecimal", JBigDecimal, (jint,), fld)
+end
+function setBigDecimal_raw(stmt::Union{JPreparedStatement, JCallableStatement}, idx::Integer, v)
+    jcall(stmt, "setBigDecimal", Nothing, (jint, JBigDecimal), idx, v)
+end
+
+getBigDecimal(rs::Union{JResultSet,JCallableStatement}, fld) = Decimal(getBigDecimal_raw(rs, fld))
+function setBigDecimal(stmt::Union{JPreparedStatement,JCallableStatement}, idx::Integer, v::AbstractString)
+    setBigDecimal_raw(stmt, idx, JBigDecimal((JString,), v))
+end
+function setBigDecimal(stmt::Union{JPreparedStatement,JCallableStatement}, idx::Integer, v::Decimal)
+    setBigDecimal_raw(stmt, idx, JBigDecimal(v))
 end
 
 """
@@ -548,7 +571,7 @@ global const get_method_dict = Dict(
         # JDBC_COLTYPE_CLOB => 2005,
         # JDBC_COLTYPE_DATALINK => 70,
         JDBC_COLTYPE_DATE => getDate,
-        JDBC_COLTYPE_DECIMAL => getFloat,
+        JDBC_COLTYPE_DECIMAL => getBigDecimal,
         # JDBC_COLTYPE_DISTINCT => 2001,
         JDBC_COLTYPE_DOUBLE => getDouble,
         JDBC_COLTYPE_FLOAT => getFloat,
@@ -560,7 +583,7 @@ global const get_method_dict = Dict(
         JDBC_COLTYPE_NCHAR => getNString,
         # JDBC_COLTYPE_NCLOB => 2011,
         # JDBC_COLTYPE_NULL => 0,
-        JDBC_COLTYPE_NUMERIC => getDouble,
+        JDBC_COLTYPE_NUMERIC => getBigDecimal,
         JDBC_COLTYPE_NVARCHAR => getNString,
         # JDBC_COLTYPE_OTHER => 1111,
         JDBC_COLTYPE_REAL => getFloat,

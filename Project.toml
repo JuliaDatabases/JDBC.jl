@@ -1,9 +1,10 @@
 name = "JDBC"
 uuid = "6042db11-3c3d-5e84-8dba-9cbf74c9ba48"
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Decimals = "abce61dc-4473-55a0-ba07-351d65e31d42"
 JavaCall = "494afd89-becb-516b-aafa-70d2670c0337"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
