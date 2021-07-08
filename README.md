@@ -31,7 +31,8 @@ As described above, this package provides functionality very similar to using a 
 look in Java.
 
 ```julia
-conn = DriverManager.getConnection("jdbc:derby:test/juliatest")
+credentials = Dict("username" => "your_username_here", "password" => "your_password_here")
+conn = DriverManager.getConnection("jdbc:derby:test/juliatest", credentials)
 stmt = createStatement(conn)
 rs = executeQuery(stmt, "select * from firsttable")
 for r in rs
