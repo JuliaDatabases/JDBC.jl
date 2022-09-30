@@ -37,8 +37,8 @@ const COLUMN_NO_NULLS = 0
 const COLUMN_NULLABLE = 1
 const COLUMN_NULLABLE_UNKNOWN = 2
 
-init() = JavaCall.init()
-destroy() = JavaCall.destroy()
+const init = JavaCall.init
+const destroy = JavaCall.destroy
 
 """
 ```
