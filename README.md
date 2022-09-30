@@ -25,6 +25,12 @@ The JVM remains in memory unless you explicitly destroy it.  This can be done wi
 JDBC.destroy() # or JavaCall.destroy()
 ```
 
+Some drivers require special parameters for the initialization of the JVM,
+which can be passed to `init()` as a vector of `String`s, e.g.
+```julia
+JDBC.init(["--add-opens=java.base/java.nio=ALL-UNNAMED"])
+```
+
 ### Low-Level Java Interface
 
 As described above, this package provides functionality very similar to using a JDBC driver in Java. This allows you to write code very similar to how it would
